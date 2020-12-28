@@ -41,12 +41,12 @@ const int GByte = (1024 * 1024 * 1024);  //GByte
 //日志级别
 typedef enum LOG_LEVEL_
 {
-	Timer = 0
-	, Debug = 0x1
-	, Info  = 0x2
-	, Warn  = 0x4
-	, Error = 0x8
-	, ALL = 0xF
+    ALL = 0
+    , Timer = 0x1
+    , Debug = 0x2
+    , Info  = 0x4
+    , Warn  = 0x8
+    , Error = 0x10
 }LOG_LEVEL;
 
 
@@ -65,7 +65,7 @@ public:
 	void writeLog(LOG_LEVEL enLevel, const wchar_t *lpwszFormat, ...);
 	
 	//void setLogFileSize(int iSize);
-	//void setLogLevel(LOG_LEVEL enLevel);
+    void setLogLevel(LOG_LEVEL enLevel);
 
 private:
 	CMyLog();

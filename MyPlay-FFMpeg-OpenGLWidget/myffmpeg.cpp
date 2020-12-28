@@ -883,7 +883,7 @@ void CMyFFmpeg::thread_Video()
            LOG(Debug, "CMyFFmpeg::thread_Video()---> sws_scale() = %d; \n", iRet);
 
            //显示图像
-           LOG(Info, "CMyFFmpeg::thread_Video()---> m_pMyVideoOutput->updateVideoData(pAVFrameYUV->data[0]); \n");
+           LOG(Debug, "CMyFFmpeg::thread_Video()---> m_pMyVideoOutput->updateVideoData(pAVFrameYUV->data[0]); \n");
            m_pMyVideoOutput->updateVideoData(pAVFrameYUV->data[0]); //(pAVFrameYUV->data[0]);
 
            //------------------------------------------------------------------
@@ -990,7 +990,7 @@ void CMyFFmpeg::thread_Video()
 
         //投喂解码器
         m_MutexPacketVideo.lock();  //--加锁
-        LOG(Info, "CMyFFmpeg::thread_Video()---> m_listPacketVideo.size() = %d; \n", m_listPacketVideo.size());
+        LOG(Debug, "CMyFFmpeg::thread_Video()---> m_listPacketVideo.size() = %d; \n", m_listPacketVideo.size());
         while(m_listPacketVideo.size() > 0)
         {
             //取包
@@ -1000,7 +1000,7 @@ void CMyFFmpeg::thread_Video()
             iSendState = avcodec_send_packet(m_pVideoCodecCtx, pAVPacket);
             if(iSendState == AVERROR_EOF)
             {
-                LOG(Info, "CMyFFmpeg::thread_Video()---> avcodec_send_packet() = AVERROR_EOF; Set m_bClose = true; break; \n");
+                LOG(Debug, "CMyFFmpeg::thread_Video()---> avcodec_send_packet() = AVERROR_EOF; Set m_bClose = true; break; \n");
                 m_bClose = true;
                 break;
             }
@@ -1250,7 +1250,7 @@ void CMyFFmpeg::thread_Audio()
             {
                 // 转换音频
                 int iRet = swr_convert(m_pAudioConvertCtx, &pMyData, iAudioFrameData, (const uint8_t **)pAVFrame->data, pAVFrame->nb_samples);
-                LOG(Info, "CMyFFmpeg::thread_Audio()---> swr_convert( iAudioFrameData=%d, pAVFrame->nb_samples=%d ) = %d; \n", iAudioFrameData, pAVFrame->nb_samples, iRet);
+                LOG(Debug, "CMyFFmpeg::thread_Audio()---> swr_convert( iAudioFrameData=%d, pAVFrame->nb_samples=%d ) = %d; \n", iAudioFrameData, pAVFrame->nb_samples, iRet);
 
                 //拷贝时间戳
                 pMyFrame->pts = pAVFrame->pts;
@@ -1259,7 +1259,7 @@ void CMyFFmpeg::thread_Audio()
                 pMyFrame->iData = iAudioFrameData;
 
                 //投入音频对象
-                LOG(Info, "CMyFFmpeg::thread_Audio()---> m_pMyAudioOutput->pushWork(pMyFrame); \n");
+                LOG(Debug, "CMyFFmpeg::thread_Audio()---> m_pMyAudioOutput->pushWork(pMyFrame); \n");
                 m_pMyAudioOutput->pushWork(pMyFrame);
                 pMyFrame = NULL;
                 pMyData  = NULL;
@@ -1277,7 +1277,7 @@ void CMyFFmpeg::thread_Audio()
 
         //投喂解码器
         m_MutexPacketAudio.lock();  //--加锁
-        LOG(Info, "CMyFFmpeg::thread_Audio()---> m_listPacketAudio.size() = %d; \n", m_listPacketAudio.size());
+        LOG(Debug, "CMyFFmpeg::thread_Audio()---> m_listPacketAudio.size() = %d; \n", m_listPacketAudio.size());
         while(m_listPacketAudio.size() > 0)
         {
             //取包
@@ -1287,18 +1287,18 @@ void CMyFFmpeg::thread_Audio()
             iAudioState = avcodec_send_packet(m_pAudioCodecCtx, pAVPacket);
             if(iAudioState == AVERROR_EOF)
             {
-                LOG(Info, "CMyFFmpeg::thread_Audio()---> avcodec_send_packet() = AVERROR_EOF; \n");
+                LOG(Debug, "CMyFFmpeg::thread_Audio()---> avcodec_send_packet() = AVERROR_EOF; \n");
                 break;
             }
             else if (iAudioState == AVERROR(EAGAIN))
             {
                 //解码器满
-                LOG(Info, "CMyFFmpeg::thread_Audio()---> avcodec_send_packet() = AVERROR(EAGAIN); \n");
+                LOG(Debug, "CMyFFmpeg::thread_Audio()---> avcodec_send_packet() = AVERROR(EAGAIN); \n");
                 break;
             }
             else //(iVideoState == 0)  //回收Packet
             {
-                LOG(Info, "CMyFFmpeg::thread_Audio()---> avcodec_send_packet() = 0; \n");
+                LOG(Debug, "CMyFFmpeg::thread_Audio()---> avcodec_send_packet() = 0; \n");
 
                 //解引用，临时缓存Packet。
                 m_listPacketAudio.pop_front();
@@ -1361,7 +1361,7 @@ void CMyFFmpeg::thread_Audio()
     if (iBufferDuration > 0)
     {
         int iBufferDelay = (int)((iBufferDuration + m_iAudioDuration) * m_dAudioTimebase * 0.5);
-        LOG(Debug, "CMyFFmpeg::thread_Audio()---> m_pMyAudioOutput->getBufferDuration()=%d; m_iAudioDuration=%d; m_dAudioTimebase[%lf]; Sleep(%dms); \n", iBufferDuration, m_iAudioDuration, m_dAudioTimebase, iBufferDelay);
+        LOG(Info, "CMyFFmpeg::thread_Audio()---> m_pMyAudioOutput->getBufferDuration()=%d; m_iAudioDuration=%d; m_dAudioTimebase[%lf]; Sleep(%dms); \n", iBufferDuration, m_iAudioDuration, m_dAudioTimebase, iBufferDelay);
         if (iBufferDelay > 0)
         {
             Sleep(iBufferDelay);

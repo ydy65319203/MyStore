@@ -383,7 +383,12 @@ printf(".%03d", tb.millitm);
 
 void CMyLog::writeLog(LOG_LEVEL enLevel, const char *lpszFormat, ...)
 {
-	//取系统时间
+    if(enLevel < m_enLogLevel)
+    {
+        return;
+    }
+
+    //取系统时间
 	char szDateTime[64] = { 0 };
 	struct timeb tb;
 	ftime(&tb);
@@ -526,7 +531,12 @@ void CMyLog::writeLog(LOG_LEVEL enLevel, const char *lpszFormat, ...)
 
 void CMyLog::writeLog(LOG_LEVEL enLevel, const wchar_t *lpwszFormat, ...)
 {
-	//取系统时间
+    if(enLevel < m_enLogLevel)
+    {
+        return;
+    }
+
+    //取系统时间
 	char szDateTime[64] = { 0 };
 	struct timeb tb;
 	ftime(&tb);
@@ -680,5 +690,10 @@ void CMyLog::writeLog(LOG_LEVEL enLevel, const wchar_t *lpwszFormat, ...)
 
 	m_Mutex.unlock();  //---解锁
 
+}
+
+void CMyLog::setLogLevel(LOG_LEVEL enLevel)
+{
+    m_enLogLevel = enLevel;
 }
 
