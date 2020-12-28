@@ -6,23 +6,23 @@ QPushButton:hover
 
 QPushButton#Play
 {
-    border-image: url(D:/YDY/SourceCode/MyFFmpeg/MyPicture/playnormal.png);
+    border-image: url(:/picture/playnormal.png);
 }
 
 QPushButton#Play:hover
 {
-    border-image: url(D:/YDY/SourceCode/MyFFmpeg/MyPicture/playhoverpressed.png);
+    border-image: url(:/picture/playhoverpressed.png);
     
 }
 
 QPushButton#Pause
 {
-    border-image: url(D:/YDY/SourceCode/MyFFmpeg/MyPicture/pause.png);
+    border-image: url(:/picture/pause.png);
 }
 
 QPushButton#Open
 {
-    border-image: url(D:/YDY/SourceCode/MyFFmpeg/MyPicture/fileopen.png);
+    border-image: url(:/picture/fileopen.png);
 }
 
 QPushButton#Open:hover

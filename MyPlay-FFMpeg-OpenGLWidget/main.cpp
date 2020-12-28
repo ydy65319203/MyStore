@@ -20,8 +20,12 @@ int main(int argc, char *argv[])
         a.setStyleSheet(qssFile.readAll());
         qssFile.close();
     }
+    else
+    {
+        LOG(Warn, "main()---> qssFile.open(QFile::ReadOnly) = false; \n");
+    }
 
-    LOG(Info, "main()---> MainWindow; \n");
+    LOG(Info, "main()---> MainWindow.show; \n");
     MainWindow w;
     w.show();
     return a.exec();
