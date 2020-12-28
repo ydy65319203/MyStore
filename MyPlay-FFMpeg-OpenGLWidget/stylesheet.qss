@@ -1,0 +1,62 @@
+
+QPushButton:hover
+{
+    border-image: url(:/smileface.png);
+}
+
+QPushButton#Play
+{
+    border-image: url(D:/YDY/SourceCode/MyFFmpeg/MyPicture/playnormal.png);
+}
+
+QPushButton#Play:hover
+{
+    border-image: url(D:/YDY/SourceCode/MyFFmpeg/MyPicture/playhoverpressed.png);
+    
+}
+
+QPushButton#Pause
+{
+    border-image: url(D:/YDY/SourceCode/MyFFmpeg/MyPicture/pause.png);
+}
+
+QPushButton#Open
+{
+    border-image: url(D:/YDY/SourceCode/MyFFmpeg/MyPicture/fileopen.png);
+}
+
+QPushButton#Open:hover
+{
+    background-color: rgb(5, 184, 204);
+}
+
+
+QLineEdit#AVFilePath:hover
+{
+    font:15px;
+    font-family:微软雅黑;
+    color: white;
+    padding:0px 0px 0px 5px;
+}
+
+QSlider
+{
+    border: 2px solid grey;
+    border-radius: 10px;
+    text-align: center;
+}
+
+
+QProgressBar
+{
+    border: 2px solid #FFFFFF;
+    border-radius: 3px;
+    text-align: center;
+}
+
+QProgressBar::chunk
+{
+     /*background-color: #05B8CC;*/
+     background-color: rgb(5, 184, 204);
+}
+

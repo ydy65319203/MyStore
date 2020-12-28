@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/">
+        <file>smileface.png</file>
+        <file>textureSampler2D.fsh</file>
+        <file>vertexTextureMatrix.vsh</file>
+        <file>textureSampler2D_YUV.fsh</file>
+    </qresource>
+</RCC>
