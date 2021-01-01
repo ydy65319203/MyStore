@@ -6,11 +6,16 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
-	LOG(Info, "MainWindow::MainWindow()...\r\n");
+    //setWindowFlags(Qt::FramelessWindowHint | Qt::ToolTip);  // Qt::FramelessWindowHint | Qt::Tool
+    //setAttribute(Qt::WA_TranslucentBackground);
+    //this->setWindowOpacity(0.5);
+
+    LOG(Info, "MainWindow::MainWindow()...\r\n");
     ui->setupUi(this);
 
     m_pFrameControlPanel = new CMyFrameControlPanel;
     this->setCentralWidget(m_pFrameControlPanel);
+    this->setObjectName("MainWindow");
 }
 
 MainWindow::~MainWindow()

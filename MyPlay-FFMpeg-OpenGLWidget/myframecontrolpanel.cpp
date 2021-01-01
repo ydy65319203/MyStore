@@ -3,6 +3,9 @@
 
 CMyFrameControlPanel::CMyFrameControlPanel()
 {
+    //setAttribute(Qt::WA_TranslucentBackground);
+    //this->setWindowOpacity(0.5);
+
     m_iYUVFrameSize = 0;
     m_iYUVFileSize = 0;
     m_iPlayPos = 0;
@@ -32,18 +35,29 @@ CMyFrameControlPanel::CMyFrameControlPanel()
 
     //--------------------------------------------------------------------------
 
-    m_pProgressBar_Play = new QProgressBar;  //播放进度条
+    //播放进度条
+    m_pProgressBar_Play = new QProgressBar;
+    //m_pProgressBar_Play->setTabletTracking(false);
     m_pProgressBar_Play->setObjectName("PlayProgressBar");
+    m_pProgressBar_Play->setRange(0, 100);
+    m_pProgressBar_Play->setValue(30);
 
+    //播放按钮
     m_pPushButton_Play = new QPushButton();  //QStringLiteral("播放")
-    m_pPushButton_OpenFile = new QPushButton();  //QStringLiteral("打开文件")
-    m_pLineEdit_FilePath   = new QLineEdit(":/smileface.png");  //显示文件路径
-
     m_pPushButton_Play->setObjectName("Play");
-    m_pPushButton_OpenFile->setObjectName("Open");
-    m_pLineEdit_FilePath->setObjectName("FilePath");
+    //m_pPushButton_Play->setEnabled(false);  //禁用Play按钮
+    //m_pPushButton_Play->setFixedWidth(54);
+    //m_pPushButton_Play->setFixedHeight(54);
 
-    m_pPushButton_Play->setEnabled(false);  //禁用Play按钮
+    //打开按钮
+    m_pPushButton_OpenFile = new QPushButton();  //QStringLiteral("打开文件")
+    m_pPushButton_OpenFile->setObjectName("Open");
+    //m_pPushButton_OpenFile->setFixedHeight(24);
+    //m_pPushButton_OpenFile->setFixedWidth(24);
+
+    //显示文件路径
+    m_pLineEdit_FilePath   = new QLineEdit(":/smileface.png");
+    m_pLineEdit_FilePath->setObjectName("FilePath");
 
     connect(m_pPushButton_Play, &QPushButton::clicked, this, &CMyFrameControlPanel::OnButton_Play);
     connect(m_pPushButton_OpenFile, &QPushButton::clicked, this, &CMyFrameControlPanel::OnButton_OpenFile);
@@ -69,6 +83,7 @@ CMyFrameControlPanel::CMyFrameControlPanel()
     //播放按钮横向布局
     QHBoxLayout *pHBoxLayoutPlayButton = new QHBoxLayout;
     pHBoxLayoutPlayButton->addWidget(m_pPushButton_Play);
+    pHBoxLayoutPlayButton->addSpacing(10);
     pHBoxLayoutPlayButton->addWidget(m_pPushButton_OpenFile);
     pHBoxLayoutPlayButton->addWidget(m_pLineEdit_FilePath);
     //pHBoxLayoutPlayButton->addStretch(5);
@@ -85,14 +100,17 @@ CMyFrameControlPanel::CMyFrameControlPanel()
     m_pSliderX->setMaximum(180);
     m_pSliderX->setMinimum(-180);
     m_pSliderX->setSingleStep(5);
+    m_pSliderX->setObjectName("X");
     m_pSliderX->setInvertedControls(true);
     m_pSliderX->setInvertedAppearance(true);
+    m_pSliderX->setTracking(false);  //鼠标抬起时才发出ChangeValue信号
 
     m_pSliderY = new QSlider(Qt::Horizontal);
     m_pSliderY->setValue(0);
     m_pSliderY->setMaximum(180);
     m_pSliderY->setMinimum(-180);
     m_pSliderY->setSingleStep(5);
+    m_pSliderY->setObjectName("Y");
     m_pSliderY->setInvertedControls(true);
     m_pSliderY->setInvertedAppearance(true);
 
@@ -101,6 +119,7 @@ CMyFrameControlPanel::CMyFrameControlPanel()
     m_pSliderZ->setMaximum(180);
     m_pSliderZ->setMinimum(-180);
     m_pSliderZ->setSingleStep(5);
+    m_pSliderZ->setObjectName("Z");
     m_pSliderZ->setInvertedControls(true);
     m_pSliderZ->setInvertedAppearance(true);
 

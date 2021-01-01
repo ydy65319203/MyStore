@@ -8,5 +8,6 @@
         <file>picture/pause.png</file>
         <file>picture/playhoverpressed.png</file>
         <file>picture/playnormal.png</file>
+        <file>picture/background-boxboy.jpg</file>
     </qresource>
 </RCC>
