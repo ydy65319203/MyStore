@@ -45,6 +45,10 @@ MyOpenGLWidget::MyOpenGLWidget(QWidget *pParent)
     m_fAngleZ = 0.0f;
 
     connect(this, &MyOpenGLWidget::sig_updateMyWindow, this, &MyOpenGLWidget::OnUpdateMyWindow);
+
+    //追踪鼠标事件
+    setMouseTracking(true);
+    //setAttribute(Qt::WA_TransparentForMouseEvents,true);
 }
 
 MyOpenGLWidget::~MyOpenGLWidget()
@@ -190,6 +194,70 @@ void MyOpenGLWidget::updateMyWindow()
 {
     //LOG(Info, "MyOpenGLWidget::updateMyWindow()---> emit sig_updateMyWindow(); \n");
     emit sig_updateMyWindow();
+}
+
+void MyOpenGLWidget::mouseMoveEvent(QMouseEvent *event)
+{
+    //LOG(Debug, "MyOpenGLWidget::mouseMoveEvent(x=%d, globalX=%d)... \n", event->x(), event->globalX());
+
+    if(m_bControlPanel && event->y() < m_rectControlPanel.y())
+    {
+        //Hide控制面板
+        if(m_pFrameControlPanel)
+        {
+            LOG(Debug, "MyOpenGLWidget::mouseMoveEvent(x=%d, globalX=%d)---> m_pFrameControlPanel->hide(); \n", event->x(), event->globalX());
+            ((QFrame*)m_pFrameControlPanel)->hide();
+            m_bControlPanel = false;
+        }
+    }
+    else if(!m_bControlPanel && event->y() > m_rectControlPanel.y())
+    {
+        //Show控制面板
+        if(m_pFrameControlPanel)
+        {
+            LOG(Debug, "MyOpenGLWidget::mouseMoveEvent(x=%d, globalX=%d)---> m_pFrameControlPanel->show(); \n", event->x(), event->globalX());
+            ((QFrame*)m_pFrameControlPanel)->show();
+            m_bControlPanel = true;
+        }
+    }
+}
+
+void MyOpenGLWidget::enterEvent(QEvent *event)
+{
+    LOG(Debug, "MyOpenGLWidget::enterEvent( event->type() = %d )... \n", event->type());
+
+    if(m_pFrameControlPanel)
+    {
+//        m_rectControlPanel = ((QFrame*)m_pFrameControlPanel)->frameRect();
+//        LOG(Info, "MyOpenGLWidget::enterEvent()---> m_pFrameControlPanel->frameRect(); rect.x=%d, y=%d, width=%d, height=%d; \n",
+//                   m_rectControlPanel.x(),
+//                   m_rectControlPanel.y(),
+//                   m_rectControlPanel.width(),
+//                   m_rectControlPanel.height());
+
+        m_bControlPanel =((QFrame*)m_pFrameControlPanel)->isVisible();
+        m_rectControlPanel = ((QFrame*)m_pFrameControlPanel)->frameGeometry();
+        LOG(Debug, "MyOpenGLWidget::enterEvent()---> m_pFrameControlPanel->frameGeometry(); rect.x=%d, y=%d, width=%d, height=%d; bVisible=%d; \n",
+                   m_rectControlPanel.x(),
+                   m_rectControlPanel.y(),
+                   m_rectControlPanel.width(),
+                   m_rectControlPanel.height(),
+                   m_bControlPanel);
+    }
+
+}
+
+void MyOpenGLWidget::leaveEvent(QEvent *event)
+{
+    LOG(Debug, "MyOpenGLWidget::leaveEvent( event->type() = %d )... \n", event->type());
+
+    if(m_bControlPanel && m_pFrameControlPanel)
+    {
+        //Hide控制面板
+        LOG(Debug, "MyOpenGLWidget::leaveEvent()---> m_pFrameControlPanel->hide(); \n");
+        ((QFrame*)m_pFrameControlPanel)->hide();
+        m_bControlPanel = false;
+    }
 }
 
 //槽函数,响应信号: sig_updateMyWindow

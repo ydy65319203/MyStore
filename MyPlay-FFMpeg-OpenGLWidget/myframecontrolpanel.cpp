@@ -145,11 +145,15 @@ CMyFrameControlPanel::CMyFrameControlPanel()
 
     //界面主布局
     QVBoxLayout *pVBoxLayoutMain = new QVBoxLayout;
-    pVBoxLayoutMain->addStretch();
+    //pVBoxLayoutMain->addStretch();
     pVBoxLayoutMain->addWidget(m_pSliderPlay);
     pVBoxLayoutMain->addLayout(pHBoxLayoutPlay);
 
     this->setLayout(pVBoxLayoutMain);
+
+    //追踪鼠标事件
+    //setMouseTracking(true);
+    //setAttribute(Qt::WA_TransparentForMouseEvents,true);
 }
 
 CMyFrameControlPanel::~CMyFrameControlPanel()
@@ -437,6 +441,23 @@ void CMyFrameControlPanel::timerEvent(QTimerEvent *event)
         playYUVFrame();
     }
 }
+
+//void CMyFrameControlPanel::mouseMoveEvent(QMouseEvent *event)
+//{
+//    LOG(Info, "CMyFrameControlPanel::mouseMoveEvent(x=%d, globalX=%d)... \n", event->x(), event->globalX());
+//}
+
+//void CMyFrameControlPanel::enterEvent(QEvent *event)
+//{
+//    LOG(Info, "CMyFrameControlPanel::enterEvent( event->type() = %d )---> this->show(); \n", event->type());
+//    this->show();
+//}
+
+//void CMyFrameControlPanel::leaveEvent(QEvent *event)
+//{
+//    LOG(Info, "CMyFrameControlPanel::leaveEvent( event->type() = %d )---> this->hide(); \n", event->type());
+//    this->hide();
+//}
 
 void CMyFrameControlPanel::openYUVFile(QString &qstrFileName)
 {

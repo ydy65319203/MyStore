@@ -13,5 +13,8 @@
         <file>picture/ring.png</file>
         <file>picture/plane.png</file>
         <file>picture/splitwindow.png</file>
+        <file>picture/addfile.png</file>
+        <file>picture/settings.png</file>
+        <file>picture/add.png</file>
     </qresource>
 </RCC>

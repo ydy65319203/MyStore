@@ -10,6 +10,8 @@
 #include <QPushButton>
 #include <QTimerEvent>
 
+#include <QMouseEvent>
+
 #include <QFileDialog>
 #include <QFileInfo>
 
@@ -34,7 +36,22 @@ public slots:
     void startAudio();  //临时测试。界面不知道声音，由FFmpeg解码到音频流后发起播放。
 
 protected:
-      void timerEvent(QTimerEvent *event) override;
+    void timerEvent(QTimerEvent *event) override;
+
+    //重写Widget的一些方法  //实现窗口可拖动
+    //void mousePressEvent(QMouseEvent *event) override;
+    //void mouseMoveEvent(QMouseEvent *event) override;
+    //void mouseReleaseEvent(QMouseEvent *event) override;
+
+    //void enterEvent(QEvent *event) override;  //进入QWidget瞬间事件
+    //void leaveEvent(QEvent *event) override;  //离开QWidget瞬间事件
+
+    //关闭时不退出，而是到系统托盘
+    //void closeEvent(QCloseEvent *event) override;
+
+    //拖拽文件进入
+    //void dragEnterEvent(QDragEnterEvent* event) override;
+    //void dropEvent(QDropEvent* event) override;
 
 private:
     void openYUVFile(QString &qstrFileName);

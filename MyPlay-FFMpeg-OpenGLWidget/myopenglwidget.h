@@ -5,6 +5,9 @@
 class CMyWidgetControlPanel;
 class CMyFrameControlPanel;
 
+#include <QMouseEvent>
+#include <QFrame>
+
 #include <QOpenGLWidget>
 
 #include <QOpenGLFunctions>
@@ -102,9 +105,27 @@ protected:
 
     void updateMyWindow();
 
+protected:
+    //重写Widget的一些方法  //实现窗口可拖动
+    //void mousePressEvent(QMouseEvent *event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
+    //void mouseReleaseEvent(QMouseEvent *event) override;
+
+    void enterEvent(QEvent *event) override;  //进入QWidget瞬间事件
+    void leaveEvent(QEvent *event) override;  //离开QWidget瞬间事件
+
+    //关闭时不退出，而是到系统托盘
+    //void closeEvent(QCloseEvent *event) override;
+
+    //拖拽文件进入
+    //void dragEnterEvent(QDragEnterEvent* event) override;
+    //void dropEvent(QDropEvent* event) override;
+
 private:
     CMyWidgetControlPanel *m_pWidgetControlPanel;  //播放器的控制面板
     CMyFrameControlPanel *m_pFrameControlPanel;  //播放器的控制面板
+    QRect m_rectControlPanel;  //控制面板位置
+    bool m_bControlPanel;      //控制面板this->isVisible();
 
     int m_iVertexCount;
     int m_iVertexRectRing;

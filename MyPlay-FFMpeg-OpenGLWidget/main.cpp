@@ -1,12 +1,14 @@
 ﻿#include "mainwindow.h"
 #include "mylog.h"
 
+#include "mywidget.h"
+
 #include <QApplication>
 
 int main(int argc, char *argv[])
 {
     LOG(Info, "main()... \n");
-    QApplication a(argc, argv);
+    QApplication app(argc, argv);
 
     LOG(Info, "main()---> CMyLog::instance()->setLogLevel(Info); \n");
     CMyLog::instance()->setLogLevel(Info);
@@ -20,7 +22,7 @@ int main(int argc, char *argv[])
     if(qssFile.open(QFile::ReadOnly))
     {
         LOG(Info, "main()---> QApplication::setStyleSheet(qssFile); \n");
-        a.setStyleSheet(qssFile.readAll());
+        app.setStyleSheet(qssFile.readAll());
         qssFile.close();
     }
     else
@@ -30,6 +32,7 @@ int main(int argc, char *argv[])
 
     LOG(Info, "main()---> MainWindow.show; \n");
     MainWindow w;
+    //CMyWidget w;
     w.show();
-    return a.exec();
+    return app.exec();
 }

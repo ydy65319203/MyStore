@@ -23,6 +23,7 @@ SOURCES += \
     myframecontrolpanel.cpp \
     mylog.cpp \
     myopenglwidget.cpp \
+    mywidget.cpp \
     mywidgetcontrolpanel.cpp
 
 HEADERS += \
@@ -32,6 +33,7 @@ HEADERS += \
     myframecontrolpanel.h \
     mylog.h \
     myopenglwidget.h \
+    mywidget.h \
     mywidgetcontrolpanel.h
 
 FORMS += \
