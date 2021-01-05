@@ -96,6 +96,7 @@ signals:
     void signal_stopAudioOutput();
 
     void signal_updatePlayState(int iState);  //向上层应用报告状态
+    void signal_updatePlayStep(int64_t iPts, int64_t iDuratio);  //向上层报告播放进度
 
 private:
     QAudioFormat  m_audioFormat;    //音频格式

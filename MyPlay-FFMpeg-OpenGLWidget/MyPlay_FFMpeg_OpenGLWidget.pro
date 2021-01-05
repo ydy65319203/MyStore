@@ -22,7 +22,8 @@ SOURCES += \
     myffmpeg.cpp \
     myframecontrolpanel.cpp \
     mylog.cpp \
-    myopenglwidget.cpp
+    myopenglwidget.cpp \
+    mywidgetcontrolpanel.cpp
 
 HEADERS += \
     mainwindow.h \
@@ -30,7 +31,8 @@ HEADERS += \
     myffmpeg.h \
     myframecontrolpanel.h \
     mylog.h \
-    myopenglwidget.h
+    myopenglwidget.h \
+    mywidgetcontrolpanel.h
 
 FORMS += \
     mainwindow.ui
@@ -47,3 +49,5 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 RESOURCES += \
     resource.qrc
+
+DISTFILES +=

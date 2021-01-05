@@ -1,6 +1,10 @@
 ﻿#ifndef MYOPENGLWIDGET_H
 #define MYOPENGLWIDGET_H
 
+//#include "mywidgetcontrolpanel.h"
+class CMyWidgetControlPanel;
+class CMyFrameControlPanel;
+
 #include <QOpenGLWidget>
 
 #include <QOpenGLFunctions>
@@ -52,6 +56,9 @@ public:
     MyOpenGLWidget(QWidget *pParent = NULL);
     ~MyOpenGLWidget();
 
+    void initControlPanel(CMyWidgetControlPanel *pWidgetControlPanel);
+    void initControlPanel(CMyFrameControlPanel *pFrameControlPanel);
+
     //void splitWindow();  //拆分窗口
     void setQuartering();
     void setGraphicsTypeCube();
@@ -76,6 +83,7 @@ public slots:
     void OnUpdateMyWindow();
 
 signals:
+    void signal_updatePlayStep(int64_t iPts, int64_t iDuratio);  //向上层报告播放进度
     void sig_updatePlayState(int iState);  //向上层应用报告状态
     void sig_updateMyWindow();  //用于内部update();
 
@@ -95,6 +103,9 @@ protected:
     void updateMyWindow();
 
 private:
+    CMyWidgetControlPanel *m_pWidgetControlPanel;  //播放器的控制面板
+    CMyFrameControlPanel *m_pFrameControlPanel;  //播放器的控制面板
+
     int m_iVertexCount;
     int m_iVertexRectRing;
     int m_iIndexRectRing;

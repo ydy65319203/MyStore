@@ -1,6 +1,7 @@
 ﻿#include "myopenglwidget.h"
-
 #include "mylog.h"
+
+#include <QVBoxLayout>
 
 //AVPixelFormat
 const int AV_PIX_FMT_YUV420P = 0;
@@ -49,6 +50,30 @@ MyOpenGLWidget::MyOpenGLWidget(QWidget *pParent)
 MyOpenGLWidget::~MyOpenGLWidget()
 {
 
+}
+
+void MyOpenGLWidget::initControlPanel(CMyWidgetControlPanel *pWidgetControlPanel)
+{
+    LOG(Info, "MyOpenGLWidget::initControlPanel( pWidgetControlPanel = %p )... \n", pWidgetControlPanel);
+    m_pWidgetControlPanel = pWidgetControlPanel;
+
+    QVBoxLayout *pVBoxLayoutMain = new QVBoxLayout;
+    pVBoxLayoutMain->addStretch();
+    pVBoxLayoutMain->addWidget((QWidget*)pWidgetControlPanel);
+
+    this->setLayout(pVBoxLayoutMain);
+}
+
+void MyOpenGLWidget::initControlPanel(CMyFrameControlPanel *pFrameControlPanel)
+{
+    LOG(Info, "MyOpenGLWidget::initControlPanel( pFrameControlPanel = %p )... \n", pFrameControlPanel);
+    m_pFrameControlPanel = pFrameControlPanel;
+
+    QVBoxLayout *pVBoxLayoutMain = new QVBoxLayout;
+    pVBoxLayoutMain->addStretch();
+    pVBoxLayoutMain->addWidget((QWidget*)pFrameControlPanel);
+
+    this->setLayout(pVBoxLayoutMain);
 }
 
 void MyOpenGLWidget::setQuartering()

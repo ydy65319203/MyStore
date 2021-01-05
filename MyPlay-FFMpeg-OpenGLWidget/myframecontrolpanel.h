@@ -23,6 +23,7 @@ class CMyFrameControlPanel : public QFrame
 public:
     CMyFrameControlPanel();
     ~CMyFrameControlPanel();
+    MyOpenGLWidget* getMyOpenGLWidget();
 
 public slots:
     void OnVideoPlayState(int iState);
@@ -45,7 +46,8 @@ private:
     CMyAudioOutput *m_pMyAudioOutput;      //播放音频
     CMyFFmpeg      *m_pMyFFmpeg;
 
-    QProgressBar *m_pProgressBar_Play;     //播放进度条
+    //-----------------------------
+
     QPushButton  *m_pPushButton_Play;      //播放按钮
     QPushButton  *m_pPushButton_Pause;     //暂停按钮
     QPushButton  *m_pPushButton_OpenFile;  //打开文件
@@ -56,6 +58,7 @@ private:
     QPushButton *m_pPushButton_Ring;   //梯形环
     QPushButton *m_pPushButton_Plane;  //平面
 
+    QSlider *m_pSliderPlay;     //播放进度条
     QSlider *m_pSliderX;
     QSlider *m_pSliderY;
     QSlider *m_pSliderZ;

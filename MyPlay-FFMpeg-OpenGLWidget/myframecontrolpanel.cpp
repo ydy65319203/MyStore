@@ -30,42 +30,36 @@ CMyFrameControlPanel::CMyFrameControlPanel()
     m_pMyFFmpeg->setAudioOutput(m_pMyAudioOutput);
     m_pMyFFmpeg->setVideoOutput(m_pMyOpenGLWidget);
 
+    //控制面板嵌入播放界面
+    m_pMyOpenGLWidget->initControlPanel(this);
+
     connect(m_pMyOpenGLWidget, &MyOpenGLWidget::sig_updatePlayState, this, &CMyFrameControlPanel::OnVideoPlayState);
     connect(m_pMyAudioOutput, &CMyAudioOutput::signal_updatePlayState, this, &CMyFrameControlPanel::OnAudioPlayState);
 
     //--------------------------------------------------------------------------
 
-    //播放进度条
-    m_pProgressBar_Play = new QProgressBar;
-    //m_pProgressBar_Play->setTabletTracking(false);
-    m_pProgressBar_Play->setObjectName("PlayProgressBar");
-    m_pProgressBar_Play->setRange(0, 100);
-    m_pProgressBar_Play->setValue(30);
+    this->setObjectName("ControlPanel");
 
     //播放按钮
     m_pPushButton_Play = new QPushButton();  //QStringLiteral("播放")
     m_pPushButton_Play->setObjectName("Play");
-    //m_pPushButton_Play->setEnabled(false);  //禁用Play按钮
-    //m_pPushButton_Play->setFixedWidth(54);
-    //m_pPushButton_Play->setFixedHeight(54);
 
     //打开按钮
     m_pPushButton_OpenFile = new QPushButton();  //QStringLiteral("打开文件")
     m_pPushButton_OpenFile->setObjectName("Open");
-    //m_pPushButton_OpenFile->setFixedHeight(24);
-    //m_pPushButton_OpenFile->setFixedWidth(24);
 
     //显示文件路径
     m_pLineEdit_FilePath   = new QLineEdit(":/smileface.png");
     m_pLineEdit_FilePath->setObjectName("FilePath");
+    //m_pLineEdit_FilePath->setClearButtonEnabled(true);
 
     connect(m_pPushButton_Play, &QPushButton::clicked, this, &CMyFrameControlPanel::OnButton_Play);
     connect(m_pPushButton_OpenFile, &QPushButton::clicked, this, &CMyFrameControlPanel::OnButton_OpenFile);
 
-    m_pPushButton_Cube  = new QPushButton(QStringLiteral("立方体"));
-    m_pPushButton_Ring  = new QPushButton(QStringLiteral("梯形环"));
-    m_pPushButton_Plane = new QPushButton(QStringLiteral("平面"));
-    m_pPushButton_SplitWindow  = new QPushButton(QStringLiteral("分割窗口"));
+    m_pPushButton_Cube  = new QPushButton();  //QStringLiteral("立方体")
+    m_pPushButton_Ring  = new QPushButton();  //QStringLiteral("梯形环")
+    m_pPushButton_Plane = new QPushButton();  //QStringLiteral("平面")
+    m_pPushButton_SplitWindow  = new QPushButton();  //QStringLiteral("分割窗口")
 
     m_pPushButton_Cube->setObjectName("Cube");
     m_pPushButton_Ring->setObjectName("Ring");
@@ -80,20 +74,30 @@ CMyFrameControlPanel::CMyFrameControlPanel()
     //connect(m_pPushButton_Plane, &QPushButton::clicked, this, &CMyFrameControlPanel::startAudio);
     //connect(m_pPushButton_Plane, &QPushButton::clicked, m_pMyAudioOutput, &CMyAudioOutput::OnStopAudioOutput);
 
-    //播放按钮横向布局
-    QHBoxLayout *pHBoxLayoutPlayButton = new QHBoxLayout;
-    pHBoxLayoutPlayButton->addWidget(m_pPushButton_Play);
-    pHBoxLayoutPlayButton->addSpacing(10);
-    pHBoxLayoutPlayButton->addWidget(m_pPushButton_OpenFile);
-    pHBoxLayoutPlayButton->addWidget(m_pLineEdit_FilePath);
-    //pHBoxLayoutPlayButton->addStretch(5);
-    pHBoxLayoutPlayButton->addSpacing(50);
-    pHBoxLayoutPlayButton->addWidget(m_pPushButton_Cube);
-    pHBoxLayoutPlayButton->addWidget(m_pPushButton_Ring);
-    pHBoxLayoutPlayButton->addWidget(m_pPushButton_Plane);
-    pHBoxLayoutPlayButton->addWidget(m_pPushButton_SplitWindow);
+    //打开按钮横向布局
+    QHBoxLayout *pHBoxLayoutOpenFile = new QHBoxLayout;
+    //pHBoxLayoutPlayButton->addWidget(m_pPushButton_Play);
+    pHBoxLayoutOpenFile->addSpacing(10);
+    pHBoxLayoutOpenFile->addWidget(m_pLineEdit_FilePath);
+    pHBoxLayoutOpenFile->addWidget(m_pPushButton_OpenFile);
+    pHBoxLayoutOpenFile->addStretch();
+    //pHBoxLayoutOpenFile->addSpacing(50);
+    pHBoxLayoutOpenFile->addWidget(m_pPushButton_Plane);
+    pHBoxLayoutOpenFile->addWidget(m_pPushButton_Cube);
+    pHBoxLayoutOpenFile->addWidget(m_pPushButton_Ring);
+    pHBoxLayoutOpenFile->addWidget(m_pPushButton_SplitWindow);
 
     //--------------------------------------------------------------------------
+
+    m_pSliderPlay = new QSlider(Qt::Horizontal);
+    m_pSliderPlay->setValue(0);
+    m_pSliderPlay->setMinimum(0);
+    m_pSliderPlay->setMaximum(3600);
+    m_pSliderPlay->setSingleStep(1);
+    m_pSliderPlay->setObjectName("Play");
+    //m_pSliderPlay->setInvertedControls(true);  //滑动方向反转
+    //m_pSliderPlay->setInvertedAppearance(true);
+    m_pSliderPlay->setTracking(false);  //鼠标抬起时才发出ChangeValue信号
 
     m_pSliderX = new QSlider(Qt::Horizontal);
     m_pSliderX->setValue(0);
@@ -101,9 +105,6 @@ CMyFrameControlPanel::CMyFrameControlPanel()
     m_pSliderX->setMinimum(-180);
     m_pSliderX->setSingleStep(5);
     m_pSliderX->setObjectName("X");
-    m_pSliderX->setInvertedControls(true);
-    m_pSliderX->setInvertedAppearance(true);
-    m_pSliderX->setTracking(false);  //鼠标抬起时才发出ChangeValue信号
 
     m_pSliderY = new QSlider(Qt::Horizontal);
     m_pSliderY->setValue(0);
@@ -111,8 +112,6 @@ CMyFrameControlPanel::CMyFrameControlPanel()
     m_pSliderY->setMinimum(-180);
     m_pSliderY->setSingleStep(5);
     m_pSliderY->setObjectName("Y");
-    m_pSliderY->setInvertedControls(true);
-    m_pSliderY->setInvertedAppearance(true);
 
     m_pSliderZ = new QSlider(Qt::Horizontal);
     m_pSliderZ->setValue(0);
@@ -120,8 +119,6 @@ CMyFrameControlPanel::CMyFrameControlPanel()
     m_pSliderZ->setMinimum(-180);
     m_pSliderZ->setSingleStep(5);
     m_pSliderZ->setObjectName("Z");
-    m_pSliderZ->setInvertedControls(true);
-    m_pSliderZ->setInvertedAppearance(true);
 
     connect(m_pSliderX, &QSlider::valueChanged, m_pMyOpenGLWidget, &MyOpenGLWidget::rotateX);
     connect(m_pSliderY, &QSlider::valueChanged, m_pMyOpenGLWidget, &MyOpenGLWidget::rotateY);
@@ -129,21 +126,30 @@ CMyFrameControlPanel::CMyFrameControlPanel()
 
     //XYZ旋转滑块横向布局
     QHBoxLayout *pHBoxLayoutXYZ = new QHBoxLayout;
+    pHBoxLayoutXYZ->addSpacing(10);
     pHBoxLayoutXYZ->addWidget(m_pSliderX);
     pHBoxLayoutXYZ->addWidget(m_pSliderY);
     pHBoxLayoutXYZ->addWidget(m_pSliderZ);
 
     //--------------------------------------------------------------------------
 
+    //组合打开文件行和XYZ行
+    QVBoxLayout *pVBoxLayoutOpenFileXYZ = new QVBoxLayout;
+    pVBoxLayoutOpenFileXYZ->addLayout(pHBoxLayoutXYZ);
+    pVBoxLayoutOpenFileXYZ->addLayout(pHBoxLayoutOpenFile);
+
+    //播放按钮横向布局
+    QHBoxLayout *pHBoxLayoutPlay = new QHBoxLayout;
+    pHBoxLayoutPlay->addWidget(m_pPushButton_Play);
+    pHBoxLayoutPlay->addLayout(pVBoxLayoutOpenFileXYZ);
+
     //界面主布局
     QVBoxLayout *pVBoxLayoutMain = new QVBoxLayout;
-    pVBoxLayoutMain->addWidget(m_pMyOpenGLWidget);
-    pVBoxLayoutMain->addWidget(m_pProgressBar_Play);
-    pVBoxLayoutMain->addLayout(pHBoxLayoutPlayButton);
-    pVBoxLayoutMain->addLayout(pHBoxLayoutXYZ);
+    pVBoxLayoutMain->addStretch();
+    pVBoxLayoutMain->addWidget(m_pSliderPlay);
+    pVBoxLayoutMain->addLayout(pHBoxLayoutPlay);
 
     this->setLayout(pVBoxLayoutMain);
-
 }
 
 CMyFrameControlPanel::~CMyFrameControlPanel()
@@ -161,6 +167,11 @@ CMyFrameControlPanel::~CMyFrameControlPanel()
         LOG(Info, "CMyFrameControlPanel::~CMyFrameControlPanel()---> m_pMyAudioOutput->OnStopAudioOutput(); \n");
         m_pMyAudioOutput->OnStopAudioOutput();
     }
+}
+
+MyOpenGLWidget *CMyFrameControlPanel::getMyOpenGLWidget()
+{
+    return m_pMyOpenGLWidget;
 }
 
 void CMyFrameControlPanel::OnVideoPlayState(int iState)

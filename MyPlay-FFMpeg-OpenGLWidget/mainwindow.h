@@ -4,6 +4,7 @@
 #include <QMainWindow>
 
 #include "myframecontrolpanel.h"
+#include "mywidgetcontrolpanel.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -19,6 +20,8 @@ public:
 
 private:
     Ui::MainWindow *ui;
-	CMyFrameControlPanel *m_pFrameControlPanel;  //播放器控制面板
+
+    CMyFrameControlPanel *m_pFrameControlPanel;  //播放器控制面板
+    CMyWidgetControlPanel *m_pWidgetControlPanel;
 };
 #endif // MAINWINDOW_H
