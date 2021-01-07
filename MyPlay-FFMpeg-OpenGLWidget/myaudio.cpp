@@ -252,14 +252,19 @@ CMyAudioOutput::CMyAudioOutput()
     m_iData  = 0;
 
     m_iDuration = 0;
-    m_iPTS = 0;
-    m_iDTS = 0;
+    m_iPts = 0;
+    m_iDts = 0;
+
+    m_bReportStep = false;
+    m_iReportInterval = 0;
+    m_iReportDuration = 0;
+    m_iAudioStreamDuration = 0;
 
     m_iVolume = 0;  //音量
 
-    m_enState = QAudio::StoppedState;
-
     m_bSetAudioFormat = false;
+
+    m_enState = QAudio::StoppedState;
 }
 
 CMyAudioOutput::~CMyAudioOutput()
@@ -289,6 +294,18 @@ void CMyAudioOutput::updatePlayState(int iState)
 {
     LOG(Info, "CMyAudioOutput::updatePlayState()---> emit sig_updatePlayState(iState=%d); \n", iState);
     emit signal_updatePlayState(iState);
+}
+
+void CMyAudioOutput::setReportFlag(bool bReport)
+{
+    m_bReportStep = bReport;
+}
+
+void CMyAudioOutput::setAudioStreamDuration(int iNum, int iDen, int64_t iAudioStreamDuration)
+{
+    m_iAudioStreamDuration = iAudioStreamDuration;
+
+    m_iReportInterval = (iDen/iNum);  //上报间隔1秒
 }
 
 int CMyAudioOutput::setAudioFormat(int iChannel, int iSampleRate, int iSampleFormat)
@@ -506,15 +523,23 @@ void CMyAudioOutput::OnStopAudioOutput()
     m_pData  = NULL;
     m_iData  = 0;
 
+    m_iDuration = 0;
+    m_iPts = 0;
+    m_iDts = 0;
+
+    m_bReportStep = false;
+    m_iReportInterval = 0;
+    m_iReportDuration = 0;
+    m_iAudioStreamDuration = 0;
+
+    m_iVolume = 0;  //音量
+
+    m_bSetAudioFormat = false;
+
     LOG(Info, "CMyAudioOutput::OnStopAudioOutput()---> Set m_enState = QAudio::StoppedState[%d]; \n", QAudio::StoppedState);
     m_enState = QAudio::StoppedState;
 
-    //上报状态
-//     if (m_enState == QAudio::StoppedState)
-//     {
-//         LOG(Info, "CMyAudioOutput::OnStartAudioOutput()---> emit signal_updatePlayState( enClose = %d ); \n", enClose);
-//         emit signal_updatePlayState(enClose);
-//     }
+    this->clearAudioBuffer();
 
     return;
 }
@@ -542,8 +567,8 @@ qint64 CMyAudioOutput::readData(char *data, qint64 maxlen)
     qint64 iData = maxlen;
 
     int64_t iDuration = 0;
-    int64_t iPTS = 0;
-    int64_t iDTS = 0;
+    int64_t iPts = 0;
+    int64_t iDts = 0;
 
     while(iData > 0)
     {
@@ -581,8 +606,8 @@ qint64 CMyAudioOutput::readData(char *data, qint64 maxlen)
 
                 if (iDuration == 0)
                 {
-                    iPTS = m_pFrame->pts;
-                    iDTS = m_pFrame->dts;
+                    iPts = m_pFrame->pts;
+                    iDts = m_pFrame->dts;
                 }
 
                 iDuration += m_pFrame->duration;
@@ -599,8 +624,8 @@ qint64 CMyAudioOutput::readData(char *data, qint64 maxlen)
 
                 if (iDuration == 0)
                 {
-                    iPTS = 0x7FFFFFFF;
-                    iDTS = 0x7FFFFFFF;
+                    iPts = 0x7FFFFFFF;
+                    iDts = 0x7FFFFFFF;
                 }
             }
         }
@@ -608,11 +633,23 @@ qint64 CMyAudioOutput::readData(char *data, qint64 maxlen)
         //continue;
     }
 
-    LOG(Debug, "CMyAudioOutput::readData()---> iPTS=%d, iDTS=%d, iDuration=%d; \n", iPTS, iDTS, iDuration);
+    LOG(Debug, "CMyAudioOutput::readData()---> iPts=%d, iDts=%d, iDuration=%d; \n", iPts, iDts, iDuration);
 
     m_iDuration = iDuration;
-    m_iPTS = iPTS;
-    m_iDTS = iDTS;
+    m_iPts = iPts;
+    m_iDts = iDts;
+
+    //上报播放进度
+    if(m_bReportStep)
+    {
+        m_iReportDuration += iDuration;
+        if(m_iReportDuration >= m_iReportInterval)
+        {
+            LOG(Debug, "CMyAudioOutput::readData()---> emit signal_updatePlayStep(iPts=%p, m_iAudioStreamDuration=%p); \n", iPts, m_iAudioStreamDuration);
+            emit signal_updatePlayStep(iPts, m_iAudioStreamDuration);
+            m_iReportDuration = 0;
+        }
+    }
 
     return maxlen;
 }
@@ -628,12 +665,12 @@ qint64 CMyAudioOutput::bytesAvailable() const
 
 int64_t CMyAudioOutput::getPTS()
 {
-    return m_iPTS;
+    return m_iPts;
 }
 
 int64_t CMyAudioOutput::getDTS()
 {
-    return m_iDTS;
+    return m_iDts;
 }
 
 int64_t CMyAudioOutput::getDuration()

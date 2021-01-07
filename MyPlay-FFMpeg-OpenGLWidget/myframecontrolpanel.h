@@ -28,6 +28,8 @@ public:
     MyOpenGLWidget* getMyOpenGLWidget();
 
 public slots:
+    void OnVideoPlayStep(int64_t iPts, int64_t iVideoStreamDuration);
+    void OnAudioPlayStep(int64_t iPts, int64_t iAudioStreamDuration);
     void OnVideoPlayState(int iState);
     void OnAudioPlayState(int iState);
     void OnButton_OpenFile();
@@ -99,6 +101,9 @@ private:
 
     int m_iVideoPlayState;
     int m_iAudioPlayState;
+
+    int64_t m_iVideoStreamDuration;
+    int64_t m_iAudioStreamDuration;
 };
 
 #endif // CMYFRAMECONTROLPANEL_H

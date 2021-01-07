@@ -21,6 +21,9 @@ CMyFrameControlPanel::CMyFrameControlPanel()
     m_iVideoPlayState = enClose;
     m_iAudioPlayState = enClose;
 
+    m_iVideoStreamDuration = 0;
+    m_iAudioStreamDuration = 0;
+
     //--------------------------------------------------------------------------
 
     m_pMyOpenGLWidget = new MyOpenGLWidget;  //视频
@@ -33,8 +36,13 @@ CMyFrameControlPanel::CMyFrameControlPanel()
     //控制面板嵌入播放界面
     m_pMyOpenGLWidget->initControlPanel(this);
 
+    //更新播放状态
     connect(m_pMyOpenGLWidget, &MyOpenGLWidget::sig_updatePlayState, this, &CMyFrameControlPanel::OnVideoPlayState);
     connect(m_pMyAudioOutput, &CMyAudioOutput::signal_updatePlayState, this, &CMyFrameControlPanel::OnAudioPlayState);
+
+    //更新播放进度
+    connect(m_pMyOpenGLWidget, &MyOpenGLWidget::sig_updatePlayStep, this, &CMyFrameControlPanel::OnVideoPlayStep);
+    connect(m_pMyAudioOutput, &CMyAudioOutput::signal_updatePlayStep, this, &CMyFrameControlPanel::OnAudioPlayStep);
 
     //--------------------------------------------------------------------------
 
@@ -178,6 +186,30 @@ MyOpenGLWidget *CMyFrameControlPanel::getMyOpenGLWidget()
     return m_pMyOpenGLWidget;
 }
 
+//更新播放进度
+void CMyFrameControlPanel::OnVideoPlayStep(int64_t iPts, int64_t iVideoStreamDuration)
+{
+    if(m_iVideoStreamDuration != iVideoStreamDuration)
+    {
+        m_iVideoStreamDuration = iVideoStreamDuration;
+        m_pSliderPlay->setMaximum(m_iVideoStreamDuration);
+    }
+
+    m_pSliderPlay->setValue(iPts);
+}
+
+void CMyFrameControlPanel::OnAudioPlayStep(int64_t iPts, int64_t iAudioStreamDuration)
+{
+    if(m_iAudioStreamDuration != iAudioStreamDuration)
+    {
+        m_iAudioStreamDuration = iAudioStreamDuration;
+        m_pSliderPlay->setMaximum(m_iAudioStreamDuration);
+    }
+
+    m_pSliderPlay->setValue(iPts);
+}
+
+//更新播放状态
 void CMyFrameControlPanel::OnVideoPlayState(int iState)
 {
     LOG(Info, "CMyFrameControlPanel::OnVideoPlayState( iState=%d )... \n", iState);
@@ -320,7 +352,9 @@ void CMyFrameControlPanel::OnButton_OpenFile()
     //检查文件大小
     QFileInfo fileInfo(m_qstrImageFile);
     m_iYUVFileSize = fileInfo.size();
-    if (m_iYUVFileSize > (1024 * 1024 * 1024))
+    qint64 iYUVFileSize = 1024 * 1024 * 1024;
+    iYUVFileSize = iYUVFileSize * 4;
+    if (m_iYUVFileSize > iYUVFileSize)
     {
         LOG(Warn, "CMyFrameControlPanel::OnButton_OpenFile()---> The file is too big! m_iFileSize = %d; \n", m_iYUVFileSize);
         return;

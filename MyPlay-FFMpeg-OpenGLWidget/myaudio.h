@@ -68,7 +68,10 @@ public:
     void pauseAudioOutput();
     void stopAudioOutput();
 
-    void updatePlayState(int iState);
+    void updatePlayState(int iState);  //更新播放状态
+
+    void setReportFlag(bool bReport);  //设置上报标志
+    void setAudioStreamDuration(int iNum, int iDen, int64_t iAudioStreamDuration);
 
     int setAudioFormat(int iChannel, int iSampleRate, int iSampleFormat);
     //int setFrameBuffer(CMyFrameBuffer *pMyFrameBuffer);
@@ -96,7 +99,7 @@ signals:
     void signal_stopAudioOutput();
 
     void signal_updatePlayState(int iState);  //向上层应用报告状态
-    void signal_updatePlayStep(int64_t iPts, int64_t iDuratio);  //向上层报告播放进度
+    void signal_updatePlayStep(int64_t iPts, int64_t iAudioStreamDuratio);  //向上层报告播放进度
 
 private:
     QAudioFormat  m_audioFormat;    //音频格式
@@ -107,14 +110,19 @@ private:
     int m_iData;
 
     int64_t m_iDuration;
-    int64_t m_iPTS;
-    int64_t m_iDTS;
+    int64_t m_iPts;
+    int64_t m_iDts;
+
+    int64_t m_iAudioStreamDuration;
+    int64_t m_iReportDuration;
+    int64_t m_iReportInterval;  //根据时间基计算上报间隔
+    bool m_bReportStep;
+
+    bool m_bSetAudioFormat;
 
     int m_iVolume;
 
     QAudio::State m_enState;
-
-    bool m_bSetAudioFormat;
 };
 
 #endif // CMYAUDIO_H

@@ -77,23 +77,25 @@ public:
     void updateYUVTexture(unsigned char *pYUVFrame);
 
     void setVideoFormat(int iPixelFormat, int iWidth, int iHeight);  //AVPixelFormat: AV_PIX_FMT_YUV420P=0; AV_PIX_FMT_RGB24=2;
-    void updateVideoData(unsigned char *pYUVFrame);
-    void updatePlayState(int iState);
-    //void enablePlayButton(bool bEnable);
+    void updateVideoData(unsigned char *pYUVFrame, int64_t iPts, int64_t iDuration);
+    void updatePlayState(int iState);  //更新播放状态
+
+    void setReportFlag(bool bReport);  //设置上报标志
+    void setVideoStreamDuration(int iNum, int iDen, int64_t iVideoStreamDuration);
 
 public slots:
     void OnUpdatePlayState(enum PlayState iState);  //响应信号：sig_updatePlayState
     void OnUpdateMyWindow();
 
 signals:
-    void signal_updatePlayStep(int64_t iPts, int64_t iDuratio);  //向上层报告播放进度
+    void sig_updatePlayStep(int64_t iPts, int64_t iVideoStreamDuratio);  //向上层报告播放进度
     void sig_updatePlayState(int iState);  //向上层应用报告状态
     void sig_updateMyWindow();  //用于内部update();
 
 protected:
-    virtual void resizeGL(int w, int h);
-    virtual void initializeGL();
-    virtual void paintGL();
+    virtual void resizeGL(int w, int h) override;
+    virtual void initializeGL() override;
+    virtual void paintGL() override;
 
     void initShaders();
     void initVertexCube();
@@ -126,6 +128,11 @@ private:
     CMyFrameControlPanel *m_pFrameControlPanel;  //播放器的控制面板
     QRect m_rectControlPanel;  //控制面板位置
     bool m_bControlPanel;      //控制面板this->isVisible();
+
+    bool m_bReportStep;
+    int64_t m_iReportInterval;  //根据时间基计算上报间隔
+    int64_t m_iReportDuration;
+    int64_t m_iVideoStreamDuration;
 
     int m_iVertexCount;
     int m_iVertexRectRing;

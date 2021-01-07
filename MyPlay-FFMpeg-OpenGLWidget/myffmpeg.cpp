@@ -182,8 +182,10 @@ void CMyFFmpeg::Pause()
 void CMyFFmpeg::closeAVFile()
 {
     LOG(Info, "CMyFFmpeg::closeAVFile()... \r\n");
+
     m_bClose = true;
     m_bPause = false;
+
     Sleep(300);
 
     //线程退出
@@ -286,6 +288,32 @@ void CMyFFmpeg::closeAVFile()
         avformat_free_context(m_pAVFormatCtx);
         m_pAVFormatCtx = NULL;
     }
+
+    //---------------------------------------------------
+
+    m_iPacketMaxCount = 0;  //音视频包最大缓存数量
+
+    m_dVideoTimebase = 0;
+    m_dAudioTimebase = 0;
+
+    m_dVideoDuration = 0;  //视频帧间隔
+    m_dAudioDuration = 0;  //音频帧时长
+
+    m_iVideoPts = -9999;
+    m_iAudioPts = -9999;
+
+    m_iVideoDuration = 0;
+    m_iAudioDuration = 0;
+
+    m_iVideoPktDuration = 0;
+    m_iAudioPktDuration = 0;
+
+    m_dwVideoDelay = 0;  //视频线程睡眠时长(毫秒)
+    m_dwAudioDelay = 0;  //音频线程睡眠时长(毫秒)
+
+    m_iVideoStream = -1;
+    m_iAudioStream = -1;
+    m_iSubTitleStream = -1;
 }
 
 void CMyFFmpeg::thread_OpenAVFile()
@@ -359,12 +387,14 @@ void CMyFFmpeg::thread_OpenAVFile()
     {
         pStream = m_pAVFormatCtx->streams[iIndex];
 
-        LOG(Info, "AVStream[%d]: time_base=%d/%d, start_time=%d, duration=%d, nb_frames=%d, sample_aspect_ratio=%d/%d, avg_frame_rate=%d/%d, r_frame_rate=%d/%d; \n",
+        LOG(Info, "AVStream[%d]: time_base=%d/%d, start_time=%lld, duration=%lld, duration=%p; nb_frames=%lld, sample_aspect_ratio=%d/%d, avg_frame_rate=%d/%d, r_frame_rate=%d/%d; \n",
             pStream->index,
             pStream->time_base.num,
             pStream->time_base.den,
             pStream->start_time,
             pStream->duration,
+            pStream->duration,
+
             pStream->nb_frames,
             pStream->sample_aspect_ratio.num,
             pStream->sample_aspect_ratio.den,
@@ -411,7 +441,7 @@ void CMyFFmpeg::thread_OpenAVFile()
             continue;
         }
 
-        LOG(Info, "AVCodecContext: time_base=%d/%d, ticks_per_frame=%d, name=%s, codec_id=%d, codec_type=%d, bit_rate=%d, delay=%d, width=%d, height=%d, coded_width=%d, coded_height=%d, gop_size=%d, pix_fmt=%d, sample_fmt=%d, sample_rate=%d, channels=%d, channel_layout=%d, frame_size=%d, frame_number=%d, framerate=%d/%d; \n",
+        LOG(Info, "AVCodecContext: time_base=%d/%d, ticks_per_frame=%d, name=%s, codec_id=%d, codec_type=%d, bit_rate=%lld, delay=%d, width=%d, height=%d, coded_width=%d, coded_height=%d, gop_size=%d, pix_fmt=%d, sample_fmt=%d, sample_rate=%d, channels=%d, channel_layout=%d, frame_size=%d, frame_number=%d, framerate=%d/%d; \n",
             pCodecCtx->time_base.num,
             pCodecCtx->time_base.den,
             pCodecCtx->ticks_per_frame,
@@ -451,12 +481,29 @@ void CMyFFmpeg::thread_OpenAVFile()
                 m_iVideoStream = iIndex;
                 m_pVideoCodecCtx = pCodecCtx;
 
+                //视频流时长
+                m_iVideoStreamDuration = pStream->duration;
+                if(m_iVideoStreamDuration < 1)
+                {
+                    //取容器时长，按照流的时间基转换。
+                    //AVRational AVTimeBaseQ = AV_TIME_BASE_Q;
+                    AVRational AVTimeBase;
+                    AVTimeBase.num = 1;
+                    AVTimeBase.den = AV_TIME_BASE;
+                    m_iVideoStreamDuration = av_rescale_q(m_pAVFormatCtx->duration, AVTimeBase, pStream->time_base);
+                }
+
                 //视频帧时间基
                 m_dVideoTimebase = av_q2d(pStream->time_base) * 1000;
-                LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> m_dVideoTimebase = av_q2d(pAVStream->time_base=%d/%d) * 1000 = %fms; \n",
+                LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> m_iVideoStreamDuration = %p; m_dVideoTimebase = av_q2d(pAVStream->time_base=%d/%d) * 1000 = %fms; \n",
+                          m_iVideoStreamDuration,
                           pStream->time_base.num,
                           pStream->time_base.den,
                           m_dVideoTimebase);
+
+                //上报视频流总时长
+                LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> m_pMyVideoOutput->setAudioStreamDuration(num=%d, den=%d, m_iVideoStreamDuration=%p); \n", pStream->time_base.num, pStream->time_base.den, m_iVideoStreamDuration);
+                m_pMyVideoOutput->setVideoStreamDuration(pStream->time_base.num, pStream->time_base.den, m_iVideoStreamDuration);
 
                 //Enable播放按钮
                 LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> m_pMyVideoOutput->updatePlayState(enOpen=%d); \n", enOpen);
@@ -481,14 +528,30 @@ void CMyFFmpeg::thread_OpenAVFile()
                 m_iAudioStream = iIndex;
                 m_pAudioCodecCtx = pCodecCtx;
 
+                //视频流时长
+                m_iAudioStreamDuration = pStream->duration;
+                if(m_iAudioStreamDuration < 1)
+                {
+                    //取容器时长，按照流的时间基转换。
+                    AVRational AVTimeBase;
+                    AVTimeBase.num = 1;
+                    AVTimeBase.den = AV_TIME_BASE;
+                    m_iAudioStreamDuration = av_rescale_q(m_pAVFormatCtx->duration, AVTimeBase, pStream->time_base);
+                }
+
                 //音频帧时间基
                 m_dAudioTimebase = av_q2d(pStream->time_base) * 1000;
-                LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> m_dAudioTimebase = av_q2d(pAVStream->time_base=%d/%d) * 1000 = %fms; \n",
+                LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> m_iAudioStreamDuration = %p; m_dAudioTimebase = av_q2d(pAVStream->time_base=%d/%d) * 1000 = %fms; \n",
+                          m_iAudioStreamDuration,
                           pStream->time_base.num,
                           pStream->time_base.den,
                           m_dAudioTimebase);
 
-                //Enable播放按钮
+                //上报音频流总时长
+                LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> m_pMyAudioOutput->setAudioStreamDuration(num=%d, den=%d, m_iAudioStreamDuration=%p); \n", pStream->time_base.num, pStream->time_base.den, m_iAudioStreamDuration);
+                m_pMyAudioOutput->setAudioStreamDuration(pStream->time_base.num, pStream->time_base.den, m_iAudioStreamDuration);
+
+                //上报播放状态
                 LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> m_pMyAudioOutput->updatePlayState(enOpen=%d); \n", enOpen);
                 m_pMyAudioOutput->updatePlayState(enOpen);
             }
@@ -503,18 +566,38 @@ void CMyFFmpeg::thread_OpenAVFile()
         }
         else if (pCodecPar->codec_type == AVMEDIA_TYPE_SUBTITLE)
         {
-            LOG(Info, "CMyFFmpeg::thread_Video()---> pCodecPar->codec_type = AVMEDIA_TYPE_SUBTITLE[%d]; \n", AVMEDIA_TYPE_SUBTITLE);
+            LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> pCodecPar->codec_type = AVMEDIA_TYPE_SUBTITLE[%d]; \n", AVMEDIA_TYPE_SUBTITLE);
             m_pSubTitleCodecCtx = pCodecCtx;
             //m_iSubTitleStream = iIndex;
         }
         else
         {
-            LOG(Info, "CMyFFmpeg::thread_Video()---> pCodecPar->codec_type = %d; Unkonw ! \n", pCodecPar->codec_type);
-            LOG(Info, "CMyFFmpeg::thread_Video()---> avcodec_free_context(&pCodecCtx); \n");
+            LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> pCodecPar->codec_type = %d; Unkonw ! \n", pCodecPar->codec_type);
+            LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> avcodec_free_context(&pCodecCtx); \n");
             avcodec_free_context(&pCodecCtx);
         }
 
         LOG(Info, "\n");
+    }
+
+    //选择上报设备，音频优先。 //int64_t av_rescale_q(int64_t a, AVRational bq, AVRational cq) av_const;
+    if(m_iAudioStream >= 0)
+    {
+        LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> m_pMyAudioOutput->setReportFlag(true); \n");
+        m_pMyVideoOutput->setReportFlag(false);
+        m_pMyAudioOutput->setReportFlag(true);
+    }
+    else if(m_iVideoStream >= 0)
+    {
+        LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> m_pMyVideoOutput->setReportFlag(true); \n");
+        m_pMyVideoOutput->setReportFlag(true);
+        m_pMyAudioOutput->setReportFlag(false);
+    }
+    else
+    {
+        LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> (m_pMyVideoOutput and m_pMyAudioOutput)->setReportFlag(false); \n");
+        m_pMyVideoOutput->setReportFlag(false);
+        m_pMyAudioOutput->setReportFlag(false);
     }
 
     //-----------------------------------------------------------------
@@ -830,8 +913,8 @@ void CMyFFmpeg::thread_Video()
         {
             LOG(Debug, "CMyFFmpeg::thread_Video()---> avcodec_receive_frame() = 0; \n");
 
-            LOG(Debug, "CMyFFmpeg::thread_Video()---> AVFrame[Video]: best_effort_timestamp=%d, pts=%d, format=%d, key_frame=%d, pict_type=%d, width=%d, height=%d; "
-                   "pkt_pos=%d, pkt_dts=%d, pkt_duration=%d, pkt_size=%d; "
+            LOG(Debug, "CMyFFmpeg::thread_Video()---> AVFrame[Video]: best_effort_timestamp=%lld, pts=%lld, format=%d, key_frame=%d, pict_type=%d, width=%d, height=%d; "
+                   "pkt_pos=%lld, pkt_dts=%lld, pkt_duration=%lld, pkt_size=%d; "
                    "coded_picture_number=%d, display_picture_number=%d, repeat_pict=%d, interlaced_frame=%d; top_field_first=%d, flag=%d; \n",
                    pAVFrame->best_effort_timestamp,
                    pAVFrame->pts,
@@ -884,7 +967,7 @@ void CMyFFmpeg::thread_Video()
 
            //显示图像
            LOG(Debug, "CMyFFmpeg::thread_Video()---> m_pMyVideoOutput->updateVideoData(pAVFrameYUV->data[0]); \n");
-           m_pMyVideoOutput->updateVideoData(pAVFrameYUV->data[0]); //(pAVFrameYUV->data[0]);
+           m_pMyVideoOutput->updateVideoData(pAVFrameYUV->data[0], pAVFrame->pts, pAVFrame->pkt_duration); //(pAVFrameYUV->data[0]);
 
            //------------------------------------------------------------------
 
@@ -1128,8 +1211,8 @@ void CMyFFmpeg::thread_Audio()
         {
             LOG(Debug, "CMyFFmpeg::thread_Audio()---> avcodec_receive_frame() = 0; \n");
 
-            LOG(Debug, "CMyFFmpeg::thread_Audio()---> AVFrame[Audio]: best_effort_timestamp=%d, pts=%d, format=%d, key_frame=%d, pict_type=%d, width=%d, height=%d; "
-                        "pkt_pos=%d, pkt_dts=%d, pkt_duration=%d, pkt_size=%d; "
+            LOG(Debug, "CMyFFmpeg::thread_Audio()---> AVFrame[Audio]: best_effort_timestamp=%lld, pts=%lld, format=%d, key_frame=%d, pict_type=%d, width=%d, height=%d; "
+                        "pkt_pos=%lld, pkt_dts=%lld, pkt_duration=%lld, pkt_size=%d; "
                         "coded_picture_number=%d, display_picture_number=%d, repeat_pict=%d, interlaced_frame=%d; top_field_first=%d, flag=%d; "
                         "sample_rate=%d, nb_samples=%d, channels=%d, channel_layout=%d; \n",
 
@@ -1321,6 +1404,10 @@ void CMyFFmpeg::thread_Audio()
             if (iBufferDuration > m_iAudioDuration)
             {
                 iBufferDelay = (int)((iBufferDuration - m_iAudioDuration) * m_dAudioTimebase) - 10;  //少睡10ms
+                if(iBufferDelay < 10)
+                {
+                    iBufferDelay = 10;
+                }
                 LOG(Debug, "CMyFFmpeg::thread_Audio()---> listPacket.size() = 0; m_pMyAudioOutput->getBufferDuration()=%d; m_iAudioDuration=%d; m_dAudioTimebase[%lf]; Sleep(%dms); \n", iBufferDuration, m_iAudioDuration, m_dAudioTimebase, iBufferDelay);
                 
             }
@@ -1336,7 +1423,7 @@ void CMyFFmpeg::thread_Audio()
             }
 
             //睡一会儿
-            if (iBufferDelay > 1)
+            if (iBufferDelay >= 10)
             {
                 Sleep(iBufferDelay);
             }

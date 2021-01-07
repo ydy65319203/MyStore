@@ -13,14 +13,22 @@ MyOpenGLWidget::MyOpenGLWidget(QWidget *pParent)
     Q_UNUSED(AV_PIX_FMT_YUV420P);
     Q_UNUSED(AV_PIX_FMT_RGB24);
 
+    m_pWidgetControlPanel = NULL;
+    m_pFrameControlPanel  = NULL;
+    m_bControlPanel = true;
+
+    m_bReportStep = false;
+    m_iReportInterval = 0;
+    m_iReportDuration = 0;
+    m_iVideoStreamDuration = 0;
+
     m_iVertexCount = 0;
     m_iVertexRectRing = 0;
-    m_iIndexRectRing = 0;
+    m_iIndexRectRing  = 0;
 
     m_enTextureType = enImageTexture;
     m_enGraphicsType = enRectRing;  //矩形环
     //m_enGraphicsType = enCube;    //立方体
-
     m_bQuartering = false;
 
     memset(m_uTextureId, 0, sizeof(m_uTextureId));
@@ -167,6 +175,18 @@ void MyOpenGLWidget::updatePlayState(int iState)
     emit sig_updatePlayState(iState);
 }
 
+void MyOpenGLWidget::setReportFlag(bool bReport)
+{
+    m_bReportStep = bReport;
+}
+
+void MyOpenGLWidget::setVideoStreamDuration(int iNum, int iDen, int64_t iVideoStreamDuration)
+{
+    m_iVideoStreamDuration = iVideoStreamDuration;
+
+    m_iReportInterval = (iDen/iNum);  //上报间隔1秒
+}
+
 //AVPixelFormat: AV_PIX_FMT_YUV420P=0; AV_PIX_FMT_RGB24=2;
 void MyOpenGLWidget::setVideoFormat(int iPixelFormat, int iWidth, int iHeight)
 {
@@ -178,7 +198,7 @@ void MyOpenGLWidget::setVideoFormat(int iPixelFormat, int iWidth, int iHeight)
     }
 }
 
-void MyOpenGLWidget::updateVideoData(unsigned char *pYUVFrame)
+void MyOpenGLWidget::updateVideoData(unsigned char *pYUVFrame, int64_t iPts, int64_t iDuration)
 {
     m_enTextureType = enYUVTexture;    //设置纹理类型
     m_bUpdateTextureYUV = true;
@@ -186,6 +206,18 @@ void MyOpenGLWidget::updateVideoData(unsigned char *pYUVFrame)
     
     //刷新窗口
     updateMyWindow();
+
+    //上报播放进度
+    if(m_bReportStep)
+    {
+        m_iReportDuration += iDuration;
+        if(m_iReportDuration >= m_iReportInterval)
+        {
+            LOG(Debug, "MyOpenGLWidget::updateVideoData()---> emit sig_updatePlayStep(iPts=%p, m_iVideoStreamDuration=%p); \n", iPts, m_iVideoStreamDuration);
+            emit sig_updatePlayStep(iPts, m_iVideoStreamDuration);
+            m_iReportDuration = 0;
+        }
+    }
 }
 
 

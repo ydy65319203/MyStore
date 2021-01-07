@@ -94,8 +94,8 @@ private:
     uint32_t m_dwVideoDelay;  //视频线程睡眠时长(毫秒)
     uint32_t m_dwAudioDelay;  //音频线程睡眠时长(毫秒)
 
-    //uint8_t *m_pDataBuffer;
-    //uint8_t *m_pDataYUV420P;
+    int64_t m_iVideoStreamDuration;  //视频流总时长
+    int64_t m_iAudioStreamDuration;  //音频流总时长
 
     int m_iVideoStream;
     int m_iAudioStream;
