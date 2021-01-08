@@ -3,20 +3,89 @@
 QMainWindow#MainWindow
 {
     /* border-image: url("D:/YDY/SourceCode/MyFFmpeg/MyPicture/default-LightMusicPlayer.jpg"); */
-    border-image: url(:/picture/background-boxboy.jpg);
+    /* border-image: url(:/picture/background-boxboy.jpg);  */
 }
+
+/*
+QWidget#ControlPanel
+{
+    border-image: url("D:/YDY/SourceCode/MyFFmpeg/MyPicture/default-LightMusicPlayer.jpg");
+}
+*/
+
+CMyFrameControlPanel#ControlPanel
+{
+	border: 0px solid #999999;
+}
+
+/* ========== 进度条 ========== */
+QSlider:horizontal#Play 
+{    
+	border: 0px solid #999999;
+    border-radius: 10px;
+	height: 10px;
+	background:transparent; 
+}
+
+QSlider::groove:horizontal#Play {
+    height: 4px; 
+	left:  0px; 
+	right: 0px; 
+	border: 0px solid #999999;
+    border-radius: 2px;
+    background-color: rgba(0, 0, 255, 30);
+	
+}
+
+QSlider::groove:horizontal:hover#Play {
+    height: 6px; 
+    border-radius: 3px;
+    background-color: rgba(250, 0, 0, 60);
+}
+
+/* 滑块 */
+QSlider::handle:horizontal#Play {
+    width: 20px; 
+	border-radius: 2px;
+	background-color:rgb(40, 140, 20);
+}
+
+QSlider::handle:horizontal:hover#Play {
+    width:  20px; 
+	height: 50px;   /* 此参数已被margin覆盖*/
+  /*border: 1px solid #999999;*/
+  /*margin: -7px -7px -7px -7px; */
+	margin-top:  -2px; 
+	margin-left:  0px; 
+	margin-right: 0px;
+	margin-bottom: -2px;
+	border-radius: 5px;
+	background-color:rgb(40, 130, 20);
+	/*border-image:url(:/res/images/setting_slider_handle.png);*/
+}
+
+
+QSlider::sub-page:horizontal#Play {
+    /* background: #AABB55;  */
+	background: rgba(10, 200, 10, 80);
+	/* background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 rgb(124, 124, 124), stop: 1.0 rgb(72, 71, 71));   */
+	/* background: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(27, 5, 27, 255), stop:0.25 rgba(99, 20, 102, 255), stop:0.5 rgba(154, 30, 158, 255), stop:1 rgba(173, 57, 176, 255));  */
+}
+
 
 /* ========== Play按钮 ========== */
 QPushButton#Play
 {
     border-image: url(:/picture/playnormal.png);
-	width:54px;
-	height:54px;
+	border: 0px solid #999999;
+	border-radius: 24px;
+	width:48px;
+	height:48px;
 }
 
 QPushButton:hover#Play
 {
-    background-color: rgba(0, 0, 0, 30);
+    background-color: rgba(0, 0, 0, 0.6);
 }
 
 QPushButton:pressed#Play
@@ -38,8 +107,9 @@ QPushButton#Pause
 /* ========== Open按钮 ========== */
 QPushButton#Open
 {
-    border-image: url(:/picture/fileopen.png);
-	border-radius: 1px;
+    border-image: url(:/picture/addfile.png);
+	border: 0px solid #999999;
+	border-radius: 12px;
 	width:24px;
 	height:24px;
 }
@@ -56,15 +126,16 @@ QPushButton#Open:pressed
 
 QLineEdit#FilePath
 {
+    background-color: rgba(0, 0, 0, 50);
+	border: 0px solid #999999;
+	border-radius: 12px;
+	height: 24px;
+	min-width: 250px;
+
     font:18px;
     font-family:微软雅黑;
     padding:0px 0px 0px 5px;
-	border: 0px;
-	color: rgba(255, 255, 255, 0.6);
-	background-color: rgba(0, 0, 0, 10);
-	
-	width: 200px;
-	height: 24px;
+	color: rgba(255, 255, 255, 0.6);	
 }
 
 QLineEdit#FilePath:hover
@@ -73,6 +144,7 @@ QLineEdit#FilePath:hover
     font-family:微软雅黑;
     color: blue;
     padding:0px 0px 0px 5px;
+	border-radius: 12px;
 	background-color: rgba(128, 128, 128, 0.8);
 }
 
@@ -80,11 +152,19 @@ QLineEdit#FilePath:hover
 /* ========== 立方体按钮 ========== */
 QPushButton#Cube
 {
-	color:red;
-	width:100px;
-	height:50px;
-	border: 0px solid grey;
+    border-image: url(:/picture/cube.png);
+	border: 0px solid #999999;
+	/* border-radius: 14px; */
+	width:24px;
+	height:24px;
+	
+    /*
 	background-color: rgba(0, 0, 0, 0);
+	border: 0px solid grey;
+	width:100px;
+	height:25px;
+	color:red;
+	*/
 }
 
 QPushButton:hover#Cube
@@ -103,10 +183,11 @@ QPushButton:pressed#Cube
 /* ========== 梯形环按钮 ========== */
 QPushButton#Ring
 {
-	color:red;
-	width:100px;
-	height:25px;
-	border: 0px solid blue;
+	border-image: url(:/picture/ring.png);
+	border: 0px solid #999999;
+	border-radius: 12px;
+	width:24px;
+	height:24px;
 }
 
 QPushButton:hover#Ring
@@ -116,6 +197,45 @@ QPushButton:hover#Ring
 	background-color: rgba(0, 0, 200, 30);
 }
 
+/* ========== 平面按钮 ========== */
+QPushButton#Plane
+{
+	border-image: url(:/picture/plane.png);
+	border: 0px solid #999999;
+	/* border-radius: 12px;  */
+	width:24px;
+	height:24px;
+}
+
+
+/* ========== 拆分窗口按钮 ========== */
+QPushButton#SplitWindow
+{
+	border-image: url(:/picture/splitwindow.png);
+	border: 1px solid #999999;
+	border-radius: 12px;
+	width:24px;
+	height:24px;
+}
+
+/* ========== 音量按钮 ========== */
+QPushButton#Voice
+{
+	border-image: url(:/picture/voice.png);
+	border: 1px solid #999999;
+	border-radius: 12px;
+	width:24px;
+	height:24px;
+}
+
+QPushButton:hover#Voice
+{
+	border-image: url(:/picture/voice-hover.png);
+	border: 1px solid #999999;
+	border-radius: 12px;
+	width:24px;
+	height:24px;
+}
 
 
 /*
@@ -154,21 +274,22 @@ QSlider::groove:horizontal:hover#X {
 QSlider:horizontal#X 
 {    
 	border: 0px solid #999999;
-    border-radius: 10px;
+	border-radius: 1px;
+    height: 2px;
 }
 
 QSlider::groove:horizontal#X {
-    height: 4px; 
+    height: 2px; 
 	left:  0px; 
 	right: 0px; 
 	border: 0px solid #999999;
-    border-radius: 2px;
+    border-radius: 1px;
     background-color: rgba(0, 0, 255, 30);
 }
 
 QSlider::groove:horizontal:hover#X {
-    height: 6px; 
-    border-radius: 3px;
+    height: 2px; 
+    border-radius: 1px;
     background-color: rgba(250, 0, 0, 80);
 }
 
@@ -204,7 +325,7 @@ QSlider::sub-page:horizontal#X {
 
 /* ========== 滑槽Y ========== */
 QSlider::groove:horizontal#Y {
-    border: 0px solid #999999;  /*有边框才有渐变色*/
+    border: 1px solid #999999;  /*有边框才有渐变色*/
     height: 4px; 
 	left:  0px; 
 	right: 0px; 
