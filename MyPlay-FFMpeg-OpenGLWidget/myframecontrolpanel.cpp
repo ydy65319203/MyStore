@@ -67,20 +67,30 @@ CMyFrameControlPanel::CMyFrameControlPanel()
     m_pPushButton_Cube  = new QPushButton();  //QStringLiteral("立方体")
     m_pPushButton_Ring  = new QPushButton();  //QStringLiteral("梯形环")
     m_pPushButton_Plane = new QPushButton();  //QStringLiteral("平面")
+    m_pPushButton_Voice = new QPushButton();  //音量
     m_pPushButton_SplitWindow  = new QPushButton();  //QStringLiteral("分割窗口")
 
     m_pPushButton_Cube->setObjectName("Cube");
     m_pPushButton_Ring->setObjectName("Ring");
     m_pPushButton_Plane->setObjectName("Plane");
+    m_pPushButton_Voice->setObjectName("Voice");
     m_pPushButton_SplitWindow->setObjectName("SplitWindow");
+
+    m_pSliderVolume = new QSlider(Qt::Horizontal);  //音量条
+    m_pSliderVolume->setValue(0);
+	m_pSliderVolume->setMinimum(0);
+    m_pSliderVolume->setMaximum(100);
+    m_pSliderVolume->setSingleStep(1);
+    m_pSliderVolume->setObjectName("Volume");
 
     connect(m_pPushButton_SplitWindow, &QPushButton::clicked, m_pMyOpenGLWidget, &MyOpenGLWidget::setQuartering);
     connect(m_pPushButton_Cube,  &QPushButton::clicked, m_pMyOpenGLWidget, &MyOpenGLWidget::setGraphicsTypeCube);
     connect(m_pPushButton_Plane, &QPushButton::clicked, m_pMyOpenGLWidget, &MyOpenGLWidget::setGraphicsTypePlane);
     connect(m_pPushButton_Ring,  &QPushButton::clicked, m_pMyOpenGLWidget, &MyOpenGLWidget::setGraphicsTypeRectRing);
+    connect(m_pPushButton_Voice, &QPushButton::clicked, this, &CMyFrameControlPanel::OnButton_Voice);  //喇叭按钮
+    connect(m_pSliderVolume, &QSlider::valueChanged, m_pMyAudioOutput, &CMyAudioOutput::setVolume);    //音量条
+    connect(m_pMyAudioOutput, &CMyAudioOutput::signal_volume, m_pSliderVolume, &QSlider::setValue);
 
-    //connect(m_pPushButton_Plane, &QPushButton::clicked, this, &CMyFrameControlPanel::startAudio);
-    //connect(m_pPushButton_Plane, &QPushButton::clicked, m_pMyAudioOutput, &CMyAudioOutput::OnStopAudioOutput);
 
     //打开按钮横向布局
     QHBoxLayout *pHBoxLayoutOpenFile = new QHBoxLayout;
@@ -94,6 +104,8 @@ CMyFrameControlPanel::CMyFrameControlPanel()
     pHBoxLayoutOpenFile->addWidget(m_pPushButton_Cube);
     pHBoxLayoutOpenFile->addWidget(m_pPushButton_Ring);
     pHBoxLayoutOpenFile->addWidget(m_pPushButton_SplitWindow);
+    pHBoxLayoutOpenFile->addWidget(m_pPushButton_Voice);  //音量按钮
+    pHBoxLayoutOpenFile->addWidget(m_pSliderVolume);      //音量条
 
     //--------------------------------------------------------------------------
 
@@ -465,6 +477,11 @@ void CMyFrameControlPanel::OnButton_Play()
         }
     }
 
+}
+
+void CMyFrameControlPanel::OnButton_Voice()
+{
+    LOG(Info, "CMyFrameControlPanel::OnButton_Voice()... \n");
 }
 
 //响应定时器事件

@@ -35,6 +35,8 @@ public slots:
     void OnButton_OpenFile();
     void OnButton_Play();
 
+    void OnButton_Voice();
+
     void startAudio();  //临时测试。界面不知道声音，由FFmpeg解码到音频流后发起播放。
 
 protected:
@@ -76,8 +78,10 @@ private:
     QPushButton *m_pPushButton_Cube;   //立方体
     QPushButton *m_pPushButton_Ring;   //梯形环
     QPushButton *m_pPushButton_Plane;  //平面
+    QPushButton *m_pPushButton_Voice;  //音量
 
-    QSlider *m_pSliderPlay;     //播放进度条
+    QSlider *m_pSliderVolume;    //音量条
+    QSlider *m_pSliderPlay;      //播放进度条
     QSlider *m_pSliderX;
     QSlider *m_pSliderY;
     QSlider *m_pSliderZ;

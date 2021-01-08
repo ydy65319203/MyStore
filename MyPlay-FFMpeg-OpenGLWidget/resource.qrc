@@ -16,5 +16,7 @@
         <file>picture/addfile.png</file>
         <file>picture/settings.png</file>
         <file>picture/add.png</file>
+        <file>picture/voice.png</file>
+        <file>picture/voice-hover.png</file>
     </qresource>
 </RCC>

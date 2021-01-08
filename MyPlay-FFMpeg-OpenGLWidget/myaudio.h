@@ -98,6 +98,7 @@ signals:
     void signal_pauseAudioOutput();
     void signal_stopAudioOutput();
 
+    void signal_volume(int iVolume);  //向上层应用报告音量
     void signal_updatePlayState(int iState);  //向上层应用报告状态
     void signal_updatePlayStep(int64_t iPts, int64_t iAudioStreamDuratio);  //向上层报告播放进度
 

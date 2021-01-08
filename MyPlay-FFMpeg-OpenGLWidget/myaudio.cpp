@@ -378,14 +378,19 @@ int CMyAudioOutput::setAudioFormat(int iChannel, int iSampleRate, int iSampleFor
 
 int CMyAudioOutput::setVolume(int iValue)
 {
-    LOG(Info, "CMyAudioOutput::setVolume( iValue=%d )... \n", iValue);
+    LOG(Debug, "CMyAudioOutput::setVolume( iValue=%d )... \n", iValue);
+
+    if(iValue == m_iVolume)
+    {
+        return iValue;
+    }
 
     qreal linearVolume = QAudio::convertVolume(iValue / qreal(100),
                                                QAudio::LogarithmicVolumeScale,
                                                QAudio::LinearVolumeScale);
     if(m_pAudioOutput)
     {
-        LOG(Info, "CMyAudioOutput::setVolume()---> m_pAudioOutput->setVolume(linearVolume=%lf); \n", linearVolume);
+        LOG(Info, "CMyAudioOutput::setVolume( iValue = %d )---> m_pAudioOutput->setVolume( linearVolume = %lf ); \n", iValue, linearVolume);
         m_pAudioOutput->setVolume(linearVolume);
         m_iVolume = iValue;
     }
@@ -441,8 +446,8 @@ void CMyAudioOutput::OnStartAudioOutput()
     LOG(Info, "CMyAudioOutput::OnStartAudioOutput()---> m_pAudioOutput->bufferSize() = %d; \n", iBufferSize);
 
     //设置缓存大小
-    //LOG(Info, "CMyAudioOutput::OnStartAudioOutput()---> m_pAudioOutput->setBufferSize(m_iFrameData=%d); \n", m_iFrameData);
-    //m_pAudioOutput->setBufferSize(m_iFrameData);
+    LOG(Info, "CMyAudioOutput::OnStartAudioOutput()---> m_pAudioOutput->setBufferSize(m_iFrameData=%d); \n", m_iFrameData);
+    m_pAudioOutput->setBufferSize(m_iFrameData);
 
     //启动播放
     LOG(Info, "CMyAudioOutput::OnStartAudioOutput()---> m_pAudioOutput->start(this); \n");
@@ -451,24 +456,26 @@ void CMyAudioOutput::OnStartAudioOutput()
     iBufferSize = m_pAudioOutput->bufferSize();
     LOG(Info, "CMyAudioOutput::OnStartAudioOutput()---> m_pAudioOutput->bufferSize() = %d; \n", iBufferSize);
 
-    //取播放状态
-    LOG(Info, "CMyAudioOutput::OnStartAudioOutput()---> m_pAudioOutput->state(); \n");
+    //查询音频设备状态
+    //LOG(Info, "CMyAudioOutput::OnStartAudioOutput()---> m_pAudioOutput->state(); \n");
     m_enState = m_pAudioOutput->state();
     LOG(Info, "CMyAudioOutput::OnStartAudioOutput()---> m_pAudioOutput->state() = %d; \n", m_enState);
 
     //上报状态
-    if (m_enState == QAudio::ActiveState)
-    {
-        LOG(Info, "CMyAudioOutput::OnStartAudioOutput()---> emit signal_updatePlayState( enPlay = %d ); \n", enPlay);
-        emit signal_updatePlayState(enPlay);
-    }
+//    if (m_enState == QAudio::ActiveState)
+//    {
+//        LOG(Info, "CMyAudioOutput::OnStartAudioOutput()---> emit signal_updatePlayState( enPlay = %d ); \n", enPlay);
+//        emit signal_updatePlayState(enPlay);
+//    }
 
-    //取音量
-    qreal initialVolume = QAudio::convertVolume(m_pAudioOutput->volume(),
+    //上报音频设备音量
+    qreal dVolume = m_pAudioOutput->volume();
+    qreal dLogariVolume = QAudio::convertVolume(dVolume,
                                                 QAudio::LinearVolumeScale,
                                                 QAudio::LogarithmicVolumeScale);
-    m_iVolume = qRound(initialVolume * 100);
-    LOG(Info, "CMyAudioOutput::OnStartAudioOutput()---> m_pAudioOutput->volume() = %d; \n", m_iVolume);
+    m_iVolume = qRound(dLogariVolume * 100);
+    LOG(Info, "CMyAudioOutput::OnStartAudioOutput()---> m_pAudioOutput->volume() = %lf; emit signal_volume(m_iVolume=%d); \n", dVolume, m_iVolume);
+    emit signal_volume(m_iVolume);  //发射信号
 
     LOG(Info, "CMyAudioOutput::OnStartAudioOutput() End \n");
     return;
