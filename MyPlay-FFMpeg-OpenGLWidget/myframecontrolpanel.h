@@ -28,8 +28,8 @@ public:
     MyOpenGLWidget* getMyOpenGLWidget();
 
 public slots:
-    void OnVideoPlayStep(int64_t iPts, int64_t iVideoStreamDuration);
-    void OnAudioPlayStep(int64_t iPts, int64_t iAudioStreamDuration);
+    void OnVideoPlayStep(int iStep, int iVideoReportTotal);
+    void OnAudioPlayStep(int iStep, int iAudioReportTotal);
     void OnVideoPlayState(int iState);
     void OnAudioPlayState(int iState);
     void OnButton_OpenFile();
@@ -106,8 +106,8 @@ private:
     int m_iVideoPlayState;
     int m_iAudioPlayState;
 
-    int64_t m_iVideoStreamDuration;
-    int64_t m_iAudioStreamDuration;
+    int m_iVideoReportTotal;  //播放进度条总步长
+    int m_iAudioReportTotal;
 };
 
 #endif // CMYFRAMECONTROLPANEL_H

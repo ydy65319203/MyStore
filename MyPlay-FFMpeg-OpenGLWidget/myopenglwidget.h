@@ -88,7 +88,7 @@ public slots:
     void OnUpdateMyWindow();
 
 signals:
-    void sig_updatePlayStep(int64_t iPts, int64_t iVideoStreamDuratio);  //向上层报告播放进度
+    void sig_updatePlayStep(int iStep, int iReportTotal);  //向上层报告播放进度
     void sig_updatePlayState(int iState);  //向上层应用报告状态
     void sig_updateMyWindow();  //用于内部update();
 
@@ -130,9 +130,9 @@ private:
     bool m_bControlPanel;      //控制面板this->isVisible();
 
     bool m_bReportStep;
-    int64_t m_iReportInterval;  //根据时间基计算上报间隔
+    int m_iReportTotal;
+    int m_iReportInterval;  //根据时间基计算上报间隔
     int64_t m_iReportDuration;
-    int64_t m_iVideoStreamDuration;
 
     int m_iVertexCount;
     int m_iVertexRectRing;

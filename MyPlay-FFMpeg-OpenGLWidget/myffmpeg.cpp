@@ -502,7 +502,7 @@ void CMyFFmpeg::thread_OpenAVFile()
                           m_dVideoTimebase);
 
                 //上报视频流总时长
-                LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> m_pMyVideoOutput->setAudioStreamDuration(num=%d, den=%d, m_iVideoStreamDuration=%p); \n", pStream->time_base.num, pStream->time_base.den, m_iVideoStreamDuration);
+                LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> m_pMyVideoOutput->setVideoStreamDuration(num=%d, den=%d, m_iVideoStreamDuration=%p); \n", pStream->time_base.num, pStream->time_base.den, m_iVideoStreamDuration);
                 m_pMyVideoOutput->setVideoStreamDuration(pStream->time_base.num, pStream->time_base.den, m_iVideoStreamDuration);
 
                 //Enable播放按钮

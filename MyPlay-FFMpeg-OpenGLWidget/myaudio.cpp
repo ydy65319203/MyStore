@@ -256,9 +256,9 @@ CMyAudioOutput::CMyAudioOutput()
     m_iDts = 0;
 
     m_bReportStep = false;
+    m_iReportTotal = 0;
     m_iReportInterval = 0;
     m_iReportDuration = 0;
-    m_iAudioStreamDuration = 0;
 
     m_iVolume = 0;  //音量
 
@@ -303,9 +303,37 @@ void CMyAudioOutput::setReportFlag(bool bReport)
 
 void CMyAudioOutput::setAudioStreamDuration(int iNum, int iDen, int64_t iAudioStreamDuration)
 {
-    m_iAudioStreamDuration = iAudioStreamDuration;
+    //m_iReportTotal = iAudioStreamDuration;
+    //m_iReportInterval = (iDen/iNum);  //上报间隔1秒
 
-    m_iReportInterval = (iDen/iNum);  //上报间隔1秒
+    //-----------------------------------------------------
+
+    m_iReportInterval = (iDen/iNum);  //缺省上报间隔1秒
+    m_iReportTotal = iAudioStreamDuration / m_iReportInterval;  //总时长(秒)
+    int iHour = m_iReportTotal / 3600;         //小时
+    int iMinute = m_iReportTotal % 3600 / 60;  //分钟
+    int iSecond = m_iReportTotal % 60;         //秒
+
+    //LOG(Info, "CMyAudioOutput::setAudioStreamDuration()---> iAudioStreamDuration[0x%p] = [%02d:%02d:%02d]; \n", iAudioStreamDuration, iHour, iMinute, iSecond);
+
+    if(m_iReportTotal <= (3600/2))
+    {
+        m_iReportInterval = (iDen/iNum)/4;  //上报间隔250毫秒
+        m_iReportTotal = m_iReportTotal * 4;
+    }
+    else if((3600/2) < m_iReportTotal && m_iReportTotal < (3600*24*10))
+    {
+        //m_iReportInterval = m_iReportInterval;  //上报间隔1秒
+        //m_iReportTotal = m_iReportTotal;
+    }
+    else
+    {
+        m_iReportInterval = m_iReportInterval * 16;
+        m_iReportTotal = 0x7FFFFFFF;
+    }
+
+    LOG(Info, "CMyAudioOutput::setAudioStreamDuration()---> iAudioStreamDuration[0x%X] = [%02d:%02d:%02d]; m_iReportTotal = %d, m_iReportInterval = %d; \n",
+              iAudioStreamDuration, iHour, iMinute, iSecond, m_iReportTotal, m_iReportInterval);
 }
 
 int CMyAudioOutput::setAudioFormat(int iChannel, int iSampleRate, int iSampleFormat)
@@ -535,9 +563,9 @@ void CMyAudioOutput::OnStopAudioOutput()
     m_iDts = 0;
 
     m_bReportStep = false;
+    m_iReportTotal = 0;
     m_iReportInterval = 0;
     m_iReportDuration = 0;
-    m_iAudioStreamDuration = 0;
 
     m_iVolume = 0;  //音量
 
@@ -652,8 +680,10 @@ qint64 CMyAudioOutput::readData(char *data, qint64 maxlen)
         m_iReportDuration += iDuration;
         if(m_iReportDuration >= m_iReportInterval)
         {
-            LOG(Debug, "CMyAudioOutput::readData()---> emit signal_updatePlayStep(iPts=%p, m_iAudioStreamDuration=%p); \n", iPts, m_iAudioStreamDuration);
-            emit signal_updatePlayStep(iPts, m_iAudioStreamDuration);
+            int iStep = iPts / m_iReportInterval;
+            LOG(Debug, "CMyAudioOutput::readData()---> iPts[%d] / m_iReportInterval[%d] = iStep[%d]; emit signal_updatePlayStep(iStep=%d, m_iReportTotal=%d); \n",
+                       iPts, m_iReportInterval, iStep, iStep, m_iReportTotal);
+            emit signal_updatePlayStep(iStep, m_iReportTotal);
             m_iReportDuration = 0;
         }
     }

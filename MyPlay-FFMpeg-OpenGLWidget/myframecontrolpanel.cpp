@@ -21,8 +21,8 @@ CMyFrameControlPanel::CMyFrameControlPanel()
     m_iVideoPlayState = enClose;
     m_iAudioPlayState = enClose;
 
-    m_iVideoStreamDuration = 0;
-    m_iAudioStreamDuration = 0;
+    m_iVideoReportTotal = 0;
+    m_iAudioReportTotal = 0;
 
     //--------------------------------------------------------------------------
 
@@ -199,26 +199,26 @@ MyOpenGLWidget *CMyFrameControlPanel::getMyOpenGLWidget()
 }
 
 //更新播放进度
-void CMyFrameControlPanel::OnVideoPlayStep(int64_t iPts, int64_t iVideoStreamDuration)
+void CMyFrameControlPanel::OnVideoPlayStep(int iStep, int iVideoReportTotal)
 {
-    if(m_iVideoStreamDuration != iVideoStreamDuration)
+    if(m_iVideoReportTotal != iVideoReportTotal)
     {
-        m_iVideoStreamDuration = iVideoStreamDuration;
-        m_pSliderPlay->setMaximum(m_iVideoStreamDuration);
+        m_iVideoReportTotal = iVideoReportTotal;
+        m_pSliderPlay->setMaximum(m_iVideoReportTotal);
     }
 
-    m_pSliderPlay->setValue(iPts);
+    m_pSliderPlay->setValue(iStep);
 }
 
-void CMyFrameControlPanel::OnAudioPlayStep(int64_t iPts, int64_t iAudioStreamDuration)
+void CMyFrameControlPanel::OnAudioPlayStep(int iStep, int iAudioReportTotal)
 {
-    if(m_iAudioStreamDuration != iAudioStreamDuration)
+    if(m_iAudioReportTotal != iAudioReportTotal)
     {
-        m_iAudioStreamDuration = iAudioStreamDuration;
-        m_pSliderPlay->setMaximum(m_iAudioStreamDuration);
+        m_iAudioReportTotal = iAudioReportTotal;
+        m_pSliderPlay->setMaximum(m_iAudioReportTotal);
     }
 
-    m_pSliderPlay->setValue(iPts);
+    m_pSliderPlay->setValue(iStep);
 }
 
 //更新播放状态

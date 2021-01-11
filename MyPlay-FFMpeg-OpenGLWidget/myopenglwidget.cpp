@@ -18,9 +18,9 @@ MyOpenGLWidget::MyOpenGLWidget(QWidget *pParent)
     m_bControlPanel = true;
 
     m_bReportStep = false;
+    m_iReportTotal = 0;
     m_iReportInterval = 0;
     m_iReportDuration = 0;
-    m_iVideoStreamDuration = 0;
 
     m_iVertexCount = 0;
     m_iVertexRectRing = 0;
@@ -182,9 +182,37 @@ void MyOpenGLWidget::setReportFlag(bool bReport)
 
 void MyOpenGLWidget::setVideoStreamDuration(int iNum, int iDen, int64_t iVideoStreamDuration)
 {
-    m_iVideoStreamDuration = iVideoStreamDuration;
+    //m_iVideoStreamDuration = iVideoStreamDuration;
+    //m_iReportInterval = (iDen/iNum);  //上报间隔1秒
 
-    m_iReportInterval = (iDen/iNum);  //上报间隔1秒
+    //-----------------------------------------------------
+
+    m_iReportInterval = (iDen/iNum);  //缺省上报间隔1秒
+    m_iReportTotal = iVideoStreamDuration / m_iReportInterval;  //总时长(秒)
+    int iHour = m_iReportTotal / 3600;         //小时
+    int iMinute = m_iReportTotal % 3600 / 60;  //分钟
+    int iSecond = m_iReportTotal % 60;         //秒
+
+    //LOG(Info, "MyOpenGLWidget::setVideoStreamDuration()---> iVideoStreamDuration[0x%p] = [%02d:%02d:%02d]; \n", iVideoStreamDuration, iHour, iMinute, iSecond);
+
+    if(m_iReportTotal <= (3600/2))
+    {
+        m_iReportInterval = (iDen/iNum)/4;  //上报间隔250毫秒
+        m_iReportTotal = m_iReportTotal * 4;
+    }
+    else if((3600/2) < m_iReportTotal && m_iReportTotal < (3600*24*10))
+    {
+        //m_iReportInterval = m_iReportInterval;  //上报间隔1秒
+        //m_iReportTotal = m_iReportTotal;
+    }
+    else
+    {
+        m_iReportInterval = m_iReportInterval * 16;
+        m_iReportTotal = 0x7FFFFFFF;
+    }
+
+    LOG(Info, "MyOpenGLWidget::setVideoStreamDuration()---> iVideoStreamDuration[0x%X] = [%02d:%02d:%02d]; m_iReportTotal = %d, m_iReportInterval = %d; \n",
+              iVideoStreamDuration, iHour, iMinute, iSecond, m_iReportTotal, m_iReportInterval);
 }
 
 //AVPixelFormat: AV_PIX_FMT_YUV420P=0; AV_PIX_FMT_RGB24=2;
@@ -213,8 +241,11 @@ void MyOpenGLWidget::updateVideoData(unsigned char *pYUVFrame, int64_t iPts, int
         m_iReportDuration += iDuration;
         if(m_iReportDuration >= m_iReportInterval)
         {
-            LOG(Debug, "MyOpenGLWidget::updateVideoData()---> emit sig_updatePlayStep(iPts=%p, m_iVideoStreamDuration=%p); \n", iPts, m_iVideoStreamDuration);
-            emit sig_updatePlayStep(iPts, m_iVideoStreamDuration);
+
+            int iStep = iPts / m_iReportInterval;
+            LOG(Debug, "MyOpenGLWidget::updateVideoData()---> iPts[%d] / m_iReportInterval[%d] = iStep[%d]; emit signal_updatePlayStep(iStep=%d, m_iReportTotal=%d); \n",
+                       iPts, m_iReportInterval, iStep, iStep, m_iReportTotal);
+            emit sig_updatePlayStep(iStep, m_iReportTotal);
             m_iReportDuration = 0;
         }
     }
