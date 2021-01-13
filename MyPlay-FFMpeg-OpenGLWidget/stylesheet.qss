@@ -33,21 +33,33 @@ QSlider::groove:horizontal#Play {
 	right: 0px; 
 	border: 0px solid #999999;
     border-radius: 2px;
-    background-color: rgba(0, 0, 255, 30);
+    background-color:rgba(40, 140, 20, 0.5);  /* 绿色 */
 	
 }
 
 QSlider::groove:horizontal:hover#Play {
     height: 6px; 
     border-radius: 3px;
-    background-color: rgba(250, 0, 0, 60);
+    background: rgba(10, 200, 10, 80);  /* 绿色   */
+	/* background: #AABB55; */          /* 黄绿色 */
 }
+
+QSlider::sub-page:horizontal#Play {
+    background-color:rgba(250, 100, 20, 0.7);  /* 桔色 */
+	/* background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 rgb(124, 124, 124), stop: 1.0 rgb(72, 71, 71));   */
+	/* background: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(27, 5, 27, 255), stop:0.25 rgba(99, 20, 102, 255), stop:0.5 rgba(154, 30, 158, 255), stop:1 rgba(173, 57, 176, 255)); */
+}
+
 
 /* 滑块 */
 QSlider::handle:horizontal#Play {
     width: 20px; 
-	border-radius: 2px;
-	background-color:rgb(40, 140, 20);
+	margin-top:  -2px; 
+	margin-left:  0px; 
+	margin-right: 0px;
+	margin-bottom: -2px;
+	border-radius: 4px;
+    background-color:rgba(250, 100, 20, 0.9);  /* 桔色 */
 }
 
 QSlider::handle:horizontal:hover#Play {
@@ -60,16 +72,8 @@ QSlider::handle:horizontal:hover#Play {
 	margin-right: 0px;
 	margin-bottom: -2px;
 	border-radius: 5px;
-	background-color:rgb(40, 130, 20);
-	/*border-image:url(:/res/images/setting_slider_handle.png);*/
-}
-
-
-QSlider::sub-page:horizontal#Play {
-    /* background: #AABB55;  */
-	background: rgba(10, 200, 10, 80);
-	/* background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 rgb(124, 124, 124), stop: 1.0 rgb(72, 71, 71));   */
-	/* background: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(27, 5, 27, 255), stop:0.25 rgba(99, 20, 102, 255), stop:0.5 rgba(154, 30, 158, 255), stop:1 rgba(173, 57, 176, 255));  */
+	/* background-color:rgb(40, 130, 20); */
+	/* border-image:url(:/res/images/setting_slider_handle.png);*/
 }
 
 
@@ -271,112 +275,78 @@ QSlider::groove:horizontal:hover#X {
 */
 
 /* ========== 滑槽X ========== */
-QSlider:horizontal#X 
-{    
-	border: 0px solid #999999;
-	border-radius: 1px;
-    height: 2px;
-}
-
 QSlider::groove:horizontal#X {
-    height: 2px; 
-	left:  0px; 
-	right: 0px; 
+    height: 4px; 
 	border: 0px solid #999999;
-    border-radius: 1px;
-    background-color: rgba(0, 0, 255, 30);
+    background-color: rgba(250, 250, 0, 0.8);
 }
 
 QSlider::groove:horizontal:hover#X {
-    height: 2px; 
-    border-radius: 1px;
-    background-color: rgba(250, 0, 0, 80);
+    height: 4px;
+	border: 0px solid #999999;
 }
 
 /* 滑块 */
 QSlider::handle:horizontal#X {
-    width: 20px; 
-	border-radius: 2px;
-	background-color:rgb(40, 140, 20);
-}
-
-QSlider::handle:horizontal:hover#X {
-    width:  20px; 
-	height: 50px;   /* 此参数已被margin覆盖*/
-  /*border: 1px solid #999999;*/
-  /*margin: -7px -7px -7px -7px; */
-	margin-top:  -2px; 
-	margin-left:  0px; 
-	margin-right: 0px;
-	margin-bottom: -2px;
-	border-radius: 5px;
-	background-color:rgb(40, 130, 20);
-	/*border-image:url(:/res/images/setting_slider_handle.png);*/
-}
-
-
-QSlider::sub-page:horizontal#X {
-    /* background: #AABB55;  */
-	background: rgba(10, 200, 10, 100);
-	/* background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 rgb(124, 124, 124), stop: 1.0 rgb(72, 71, 71));   */
-	/* background: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(27, 5, 27, 255), stop:0.25 rgba(99, 20, 102, 255), stop:0.5 rgba(154, 30, 158, 255), stop:1 rgba(173, 57, 176, 255));  */
-}
-
-
-/* ========== 滑槽Y ========== */
-QSlider::groove:horizontal#Y {
-    border: 1px solid #999999;  /*有边框才有渐变色*/
-    height: 4px; 
-	left:  0px; 
-	right: 0px; 
-}
-
-/* 滑块 */
-QSlider::handle:horizontal#Y {
-    width: 20px; 
-	height: 20px; 
+    width: 15px;
+	height: 20px;
 	margin-top:  -8px; 
 	margin-left:  0px; 
 	margin-right: 0px;
 	margin-bottom: -8px;
 	border-radius: 10px;
-	background-color: yellow;
+	background-color:rgb(250, 250, 0);
 }
 
-QSlider::handle:horizontal:hover#Y {
-    width: 8px; 
-	height: 8px; 
-	margin-top:  -2px; 
+
+/* ========== 滑槽Y ========== */
+QSlider::groove:horizontal#Y {
+    height: 4px; 
+	border: 0px solid #999999;
+    background-color: rgba(250, 250, 0, 0.8);
+}
+
+QSlider::groove:horizontal:hover#Y {
+    height: 4px;
+	border: 0px solid #999999;
+}
+
+/* 滑块 */
+QSlider::handle:horizontal#Y {
+    width: 15px;
+	height: 20px;
+	margin-top:  -8px; 
 	margin-left:  0px; 
 	margin-right: 0px;
-	margin-bottom: -2px;
-	border-radius: 4px;
-	background-color: yellow;
+	margin-bottom: -8px;
+	border-radius: 10px;
+	background-color:rgb(250, 250, 0);
 }
 
-QSlider::sub-page:horizontal#Y {
-    border: 1px dashed #999999;
-	/* background: #AABB55; */
-	background: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(27, 5, 27, 255), stop:0.25 rgba(99, 20, 102, 255), stop:0.5 rgba(154, 30, 158, 255), stop:1 rgba(173, 57, 176, 255));
-}
 
 
 /* ========== 滑槽Z ========== */
 QSlider::groove:horizontal#Z {
     height: 4px; 
-	border: 1px solid #FFFFFF;  /* 必须有border语句，等于0也行，否则长宽失控。*/
+	border: 0px solid #999999;
+    background-color: rgba(250, 250, 0, 0.8);
 }
 
+QSlider::groove:horizontal:hover#Z {
+    height: 4px;
+	border: 0px solid #999999;
+}
+
+/* 滑块 */
 QSlider::handle:horizontal#Z {
-    width: 20px; 
-	height: 20px; /* 最大高度，否则不圆了。*/
+    width: 15px;
+	height: 20px;
 	margin-top:  -8px; 
 	margin-left:  0px; 
 	margin-right: 0px;
 	margin-bottom: -8px;
-	border: 0px solid #FFFFFF;
-	/* background-color: grey; */
-    border-image: url("D:/YDY/SourceCode/MyFFmpeg/MyPicture/add.png");
+	border-radius: 10px;
+	background-color:rgb(250, 250, 0);
 }
 
 
@@ -395,4 +365,29 @@ QProgressBar::chunk
      /*background-color: #05B8CC;*/
      background-color: rgb(5, 184, 204);
 }
+
+/* ========== 滑槽Volume ========== */
+QSlider::groove:horizontal#Volume {
+	height: 4px;
+	border-radius: 2px;
+	border: 0px solid #999999;  /*有边框才有渐变色*/
+	background: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(27, 5, 27, 255), stop:0.25 rgba(99, 20, 102, 255), stop:0.5 rgba(154, 30, 158, 255), stop:1 rgba(173, 57, 176, 255));
+}
+
+/* 滑块 */
+QSlider::handle:horizontal#Volume {
+    width: 14px; 
+	height: 14px; 
+	margin-top:  -5px; 
+	margin-left:  0px; 
+	margin-right: 0px;
+	margin-bottom: -5px;
+	border-radius: 7px;
+	background-color: yellow;
+}
+
+
+
+
+
 

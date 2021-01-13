@@ -13,6 +13,11 @@ QWidget#ControlPanel
 }
 */
 
+CMyFrameControlPanel#ControlPanel
+{
+	border: 0px solid #999999;
+}
+
 /* ========== 进度条 ========== */
 QSlider:horizontal#Play 
 {    
@@ -102,7 +107,7 @@ QPushButton#Pause
 /* ========== Open按钮 ========== */
 QPushButton#Open
 {
-    border-image: url(:/picture/fileopen.png);
+    border-image: url(:/picture/addfile.png);
 	border: 0px solid #999999;
 	border-radius: 12px;
 	width:24px;
@@ -207,6 +212,25 @@ QPushButton#Plane
 QPushButton#SplitWindow
 {
 	border-image: url(:/picture/splitwindow.png);
+	border: 1px solid #999999;
+	border-radius: 12px;
+	width:24px;
+	height:24px;
+}
+
+/* ========== 音量按钮 ========== */
+QPushButton#Voice
+{
+	border-image: url(:/picture/voice.png);
+	border: 1px solid #999999;
+	border-radius: 12px;
+	width:24px;
+	height:24px;
+}
+
+QPushButton:hover#Voice
+{
+	border-image: url(:/picture/voice-hover.png);
 	border: 1px solid #999999;
 	border-radius: 12px;
 	width:24px;
