@@ -40,6 +40,7 @@ enum GraphicsType
     enSphere,         //球体
     enSquare,         //正方形
     enCube,           //立方体
+    enPlane,
 };
 
 enum PlayState
@@ -84,7 +85,6 @@ public:
     void setVideoStreamDuration(int iNum, int iDen, int64_t iVideoStreamDuration);
 
 public slots:
-    void OnUpdatePlayState(enum PlayState iState);  //响应信号：sig_updatePlayState
     void OnUpdateMyWindow();
 
 signals:
@@ -99,11 +99,13 @@ protected:
 
     void initShaders();
     void initVertexCube();
+    void initVertexPlane();
     void initVertexRectRing();
     void initTexture();
 
     void paintGL_TextureProgram();
-    void drawCube();
+    void drawGraphics();  //绘图
+    void drawCube();      //废弃
 
     void updateMyWindow();
 
@@ -135,6 +137,7 @@ private:
     int64_t m_iReportDuration;
 
     int m_iVertexCount;
+    int m_iVertexCount_Plane;
     int m_iVertexRectRing;
     int m_iIndexRectRing;
     enum TextureType m_enTextureType;
@@ -144,6 +147,7 @@ private:
     GLuint m_uTextureId[3];
     QOpenGLTexture *m_pTexture;
     QOpenGLVertexArrayObject *m_pVAOCube;
+    QOpenGLVertexArrayObject *m_pVAOPlane;
     QOpenGLVertexArrayObject *m_pVAORectRing;
     QOpenGLShaderProgram *m_pShaderProgram;
     QOpenGLShaderProgram *m_pShaderProgramYUV;

@@ -23,11 +23,13 @@ MyOpenGLWidget::MyOpenGLWidget(QWidget *pParent)
     m_iReportDuration = 0;
 
     m_iVertexCount = 0;
+    m_iVertexCount_Plane = 0;
     m_iVertexRectRing = 0;
     m_iIndexRectRing  = 0;
 
     m_enTextureType = enImageTexture;
-    m_enGraphicsType = enRectRing;  //矩形环
+    m_enGraphicsType = enPlane;
+    //m_enGraphicsType = enRectRing;  //矩形环
     //m_enGraphicsType = enCube;    //立方体
     m_bQuartering = false;
 
@@ -35,6 +37,7 @@ MyOpenGLWidget::MyOpenGLWidget(QWidget *pParent)
 
     m_pTexture = NULL;
     m_pVAOCube = NULL;
+    m_pVAOPlane = NULL;
     m_pVAORectRing = NULL;
     m_pShaderProgram = NULL;
     m_pShaderProgramYUV = NULL;
@@ -103,8 +106,12 @@ void MyOpenGLWidget::setGraphicsTypeCube()
 
 void MyOpenGLWidget::setGraphicsTypePlane()
 {
-    qDebug("MyOpenGLWidget::setGraphicsTypePlane()---> setPlayState(enOpen); ");
-    this->updatePlayState(enOpen);
+    //LOG(Info, "MyOpenGLWidget::setGraphicsTypePlane()---> setPlayState(enOpen); ");
+    //this->updatePlayState(enOpen);
+
+    m_enGraphicsType = enPlane;
+    m_bQuartering = false;
+    update();
 }
 
 void MyOpenGLWidget::setGraphicsTypeRectRing()
@@ -331,10 +338,10 @@ void MyOpenGLWidget::OnUpdateMyWindow()
 }
 
 //槽函数
-void MyOpenGLWidget::OnUpdatePlayState(enum PlayState iState)
-{
-    LOG(Info, "MyOpenGLWidget::OnUpdatePlayState( iState = %d )... \n", iState);
-}
+//void MyOpenGLWidget::OnUpdatePlayState(enum PlayState iState)
+//{
+//    LOG(Info, "MyOpenGLWidget::OnUpdatePlayState( iState = %d )... \n", iState);
+//}
 
 
 void MyOpenGLWidget::resizeGL(int w, int h)
@@ -355,6 +362,7 @@ void MyOpenGLWidget::initializeGL()
 
     initShaders();
     initVertexCube();
+    initVertexPlane();
     initVertexRectRing();
     //initTexture();
 
@@ -374,49 +382,33 @@ void MyOpenGLWidget::paintGL()
     glClearColor(0.0f, 0.2f, 0.0f, 1.0f);
     paintGL_TextureProgram();
 
+    //1.GL_TRIANGLES：每三个顶之间绘制三角形，之间不连接；
+    //2.GL_TRIANGLE_FAN：以V0V1V2,V0V2V3,V0V3V4，……的形式绘制三角形；
+    //3.GL_TRIANGLE_STRIP：以V0V1V2,V1V2V3,V2V3V4……的形式绘制三角形；
+
     if(m_bQuartering)  //四分割
     {
         //左上
         glViewport(0, m_iScreenH/2, m_iScreenW/2, m_iScreenH/2);
-        if(m_enGraphicsType == enCube)  //立方体
-        {
-            m_pVAOCube->bind();
-            glDrawArrays(GL_TRIANGLES, 0, m_iVertexCount);
-        }
-        else if(m_enGraphicsType == enRectRing)  //矩形环
-        {
-            m_pVAORectRing->bind();
-            glDrawElements(GL_TRIANGLE_STRIP, m_iIndexRectRing, GL_UNSIGNED_SHORT, 0);
-        }
+        this->drawGraphics();
+
+        //右上
+        glViewport(m_iScreenW/2, m_iScreenH/2, m_iScreenW/2, m_iScreenH/2);
+        this->drawGraphics();
 
         //右下
         glViewport(m_iScreenW/2, 0, m_iScreenW/2, m_iScreenH/2);
-        if(m_enGraphicsType == enCube)  //立方体
-        {
-            m_pVAOCube->bind();
-            glDrawArrays(GL_TRIANGLES, 0, m_iVertexCount);
-        }
-        else if(m_enGraphicsType == enRectRing)  //矩形环
-        {
-            m_pVAORectRing->bind();
-            glDrawElements(GL_TRIANGLE_STRIP, m_iIndexRectRing, GL_UNSIGNED_SHORT, 0);
-        }
+        this->drawGraphics();
+
+        //左下
+        glViewport(0, 0, m_iScreenW/2, m_iScreenH/2);
+        this->drawGraphics();
     }
     else
     {
+        //设置输出窗口
         glViewport(0, 0, m_iScreenW, m_iScreenH);
-    }
-
-    //绘制
-    if(m_enGraphicsType == enCube)  //立方体
-    {
-        m_pVAOCube->bind();
-        glDrawArrays(GL_TRIANGLES, 0, m_iVertexCount);
-    }
-    else if(m_enGraphicsType == enRectRing)  //矩形环
-    {
-        m_pVAORectRing->bind();
-        glDrawElements(GL_TRIANGLE_STRIP, m_iIndexRectRing, GL_UNSIGNED_SHORT, 0);
+        this->drawGraphics();
     }
 
     //释放着色器纹理
@@ -431,7 +423,11 @@ void MyOpenGLWidget::paintGL()
     }
 
     //释放VAO
-    if(m_enGraphicsType == enCube)  //立方体
+    if(m_enGraphicsType == enPlane)  //平面
+    {
+        m_pVAOPlane->release();
+    }
+    else if(m_enGraphicsType == enCube)  //立方体
     {
         m_pVAOCube->release();
     }
@@ -450,11 +446,11 @@ void MyOpenGLWidget::initShaders()
     bool bRet = m_pShaderProgram->link();
     if(bRet)
     {
-        qDebug("MyOpenGLWidget::initShaders()---> m_pShaderProgram->link() succ.");
+        LOG(Info, "MyOpenGLWidget::initShaders()---> m_pShaderProgram->link() succ.");
     }
     else
     {
-        qDebug("MyOpenGLWidget::initShaders()---> m_pShaderProgram->link() fail.");
+        LOG(Info, "MyOpenGLWidget::initShaders()---> m_pShaderProgram->link() fail.");
     }
 
     m_pShaderProgramYUV = new QOpenGLShaderProgram();
@@ -463,11 +459,11 @@ void MyOpenGLWidget::initShaders()
     bool bRetYUV = m_pShaderProgramYUV->link();
     if(bRetYUV)
     {
-        qDebug("MyOpenGLWidget::initShaders()---> m_pShaderProgramYUV->link() succ.");
+        LOG(Info, "MyOpenGLWidget::initShaders()---> m_pShaderProgramYUV->link() succ.");
     }
     else
     {
-        qDebug("MyOpenGLWidget::initShaders()---> m_pShaderProgramYUV->link() fail.");
+        LOG(Info, "MyOpenGLWidget::initShaders()---> m_pShaderProgramYUV->link() fail.");
     }
 }
 
@@ -475,45 +471,45 @@ void MyOpenGLWidget::initShaders()
 void MyOpenGLWidget::initVertexCube()
 {
     GLfloat GLfVertexCube[] = {
-        //前面
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,  //左下
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,  //右下
-         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,  //右上
-         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,  //左上
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,  //左下
+        //前面  纹理图片原点在左上角
+        -0.5f, -0.5f,  0.5f,  0.0f, 1.0f,  //左下
+         0.5f, -0.5f,  0.5f,  1.0f, 1.0f,  //右下
+         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,  //右上
+         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,  //左上
+        -0.5f, -0.5f,  0.5f,  0.0f, 1.0f,  //左下
 
         //后面
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,  //左下
-         0.5f, -0.5f, -0.5f,  1.0f, 0.0f,  //右下
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,  //右上
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,  //左上
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,  //左下
+        -0.5f, -0.5f, -0.5f,  1.0f, 1.0f,  //左下
+         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,  //右下
+         0.5f,  0.5f, -0.5f,  0.0f, 0.0f,  //右上
+         0.5f,  0.5f, -0.5f,  0.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f,  1.0f, 0.0f,  //左上
+        -0.5f, -0.5f, -0.5f,  1.0f, 1.0f,  //左下
 
         //左面
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,  //后下
-        -0.5f, -0.5f,  0.5f,  1.0f, 0.0f,  //前下
-        -0.5f,  0.5f,  0.5f,  1.0f, 1.0f,  //前上
-        -0.5f,  0.5f,  0.5f,  1.0f, 1.0f,  //前上
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,  //后上
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,  //后下
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,  //后下
+        -0.5f, -0.5f,  0.5f,  1.0f, 1.0f,  //前下
+        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,  //前上
+        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,  //前上
+        -0.5f,  0.5f, -0.5f,  0.0f, 0.0f,  //后上
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,  //后下
 
         //右面
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,  //前上
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,  //后上
-         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,  //后下
-         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-         0.5f, -0.5f,  0.5f,  0.0f, 0.0f,  //前下
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,  //前上
+         0.5f,  0.5f,  0.5f,  0.0f, 0.0f,  //前上
+         0.5f,  0.5f, -0.5f,  1.0f, 0.0f,  //后上
+         0.5f, -0.5f, -0.5f,  1.0f, 1.0f,  //后下
+         0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+         0.5f, -0.5f,  0.5f,  0.0f, 1.0f,  //前下
+         0.5f,  0.5f,  0.5f,  0.0f, 0.0f,  //前上
 
         //底面
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-         0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,  //左上  纹理原点
+         0.5f, -0.5f, -0.5f,  1.0f, 0.0f,  //右上
+         0.5f, -0.5f,  0.5f,  1.0f, 1.0f,  //右下
+         0.5f, -0.5f,  0.5f,  1.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 1.0f,  //
+        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
 
         //顶面
         -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
@@ -533,20 +529,56 @@ void MyOpenGLWidget::initVertexCube()
     pVBO->bind();
     pVBO->allocate(GLfVertexCube, sizeof(GLfVertexCube));
 
-    m_pShaderProgram->bind();
+    m_pShaderProgram->bind();  //看似操作着色器，其实仅标识VBO中各种属性数据的起始位置，保存到VAO中，绘制时需要再绑定着色器与VAO。
     m_pShaderProgram->setAttributeBuffer("vec2TexurePos", GL_FLOAT, 3*sizeof(GLfloat), 2, (3+2)*sizeof(GLfloat));
     m_pShaderProgram->setAttributeBuffer("vec3VertexPos", GL_FLOAT, 0, 3, (3+2)*sizeof(GLfloat));
     m_pShaderProgram->enableAttributeArray(m_pShaderProgram->attributeLocation("vec3VertexPos"));
     m_pShaderProgram->enableAttributeArray(m_pShaderProgram->attributeLocation("vec2TexurePos"));
 
     m_iVertexCount = sizeof(GLfVertexCube)/sizeof(GLfVertexCube[0])/5;
-    qDebug("MyOpenGLWidget::initVertexCube()---> sizeof(GLfVertexCube) = %d; m_iVertexCount = %d;", sizeof(GLfVertexCube), m_iVertexCount);
+    LOG(Info, "MyOpenGLWidget::initVertexCube()---> sizeof(GLfVertexCube) = %d; m_iVertexCount = %d;", sizeof(GLfVertexCube), m_iVertexCount);
 
 //    QOpenGLFunctions *pOpenGLFunctions = this->context()->functions();
 //    pOpenGLFunctions->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, (3+2)*sizeof(GLfloat), 0);
 //    pOpenGLFunctions->glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, (3+2)*sizeof(GLfloat), (GLvoid*)(3 * sizeof(GLfloat)));
 //    pOpenGLFunctions->glEnableVertexAttribArray(0);
 //    pOpenGLFunctions->glEnableVertexAttribArray(1);
+}
+
+void MyOpenGLWidget::initVertexPlane()
+{
+//    GLfloat GLfVertexPlane[] = {
+//        -1.0f, -1.0f,  0.0f,  0.0f, 0.0f,  //左下
+//         1.0f, -1.0f,  0.0f,  1.0f, 0.0f,  //右下
+//         1.0f,  1.0f,  0.0f,  1.0f, 1.0f,  //右上
+//        -1.0f,  1.0f,  0.0f,  0.0f, 1.0f   //左上
+//    };
+
+    GLfloat GLfVertexPlane[] = {
+        //跟上面比，对换纹理图的头脚位置。纹理图片的原点在左上角。
+        -1.0f, -1.0f,  0.0f,  0.0f, 1.0f,  //左下
+         1.0f, -1.0f,  0.0f,  1.0f, 1.0f,  //右下
+         1.0f,  1.0f,  0.0f,  1.0f, 0.0f,  //右上
+        -1.0f,  1.0f,  0.0f,  0.0f, 0.0f   //左上
+    };
+
+    m_pVAOPlane = new QOpenGLVertexArrayObject();
+    m_pVAOPlane->create();
+    m_pVAOPlane->bind();
+
+    QOpenGLBuffer *pVBO = new QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
+    pVBO->create();
+    pVBO->bind();
+    pVBO->allocate(GLfVertexPlane, sizeof(GLfVertexPlane));
+
+    m_pShaderProgram->bind();  //看似操作着色器，其实仅标识VBO中各种属性数据的起始位置，保存到VAO中，绘制时需要再绑定着色器与VAO。
+    m_pShaderProgram->setAttributeBuffer("vec2TexurePos", GL_FLOAT, 3*sizeof(GLfloat), 2, (3+2)*sizeof(GLfloat));
+    m_pShaderProgram->setAttributeBuffer("vec3VertexPos", GL_FLOAT, 0, 3, (3+2)*sizeof(GLfloat));
+    m_pShaderProgram->enableAttributeArray(m_pShaderProgram->attributeLocation("vec3VertexPos"));
+    m_pShaderProgram->enableAttributeArray(m_pShaderProgram->attributeLocation("vec2TexurePos"));
+
+    m_iVertexCount_Plane = sizeof(GLfVertexPlane)/sizeof(GLfVertexPlane[0])/5;
+    LOG(Info, "MyOpenGLWidget::initVertexPlane()---> sizeof(GLfVertexPlane) = %d; m_iVertexCount = %d;", sizeof(GLfVertexPlane), m_iVertexCount_Plane);
 }
 
 
@@ -610,7 +642,7 @@ void MyOpenGLWidget::initVertexRectRing()
 
     m_iVertexRectRing = sizeof(GLfVertexRectRing)/sizeof(GLfVertexRectRing[0])/5;
     m_iIndexRectRing = sizeof(GluIndexRectRing)/sizeof(GluIndexRectRing[0]);
-    qDebug("MyOpenGLWidget::initVertexRectRing()---> sizeof(GLfVertexRectRing)=%d; m_iVertexRectRing=%d; m_iIndexRectRing=%d;", sizeof(GLfVertexRectRing), m_iVertexRectRing, m_iIndexRectRing);
+    LOG(Info, "MyOpenGLWidget::initVertexRectRing()---> sizeof(GLfVertexRectRing) = %d; m_iVertexCount = %d; m_iIndexCount = %d;", sizeof(GLfVertexRectRing), m_iVertexRectRing, m_iIndexRectRing);
 }
 
 //初始化纹理
@@ -647,13 +679,14 @@ void MyOpenGLWidget::paintGL_TextureProgram()
             if(m_bUpdateTexture)
             {
                 qDebug("MyOpenGLWidget::paintGL_TextureProgram()---> Create image Texture.");
-                m_pTexture = new QOpenGLTexture(m_imageTexture.mirrored());
+                //m_pTexture = new QOpenGLTexture(m_imageTexture.mirrored());
+                m_pTexture = new QOpenGLTexture(m_imageTexture);
                 m_bUpdateTexture  = false;
             }
             else if(m_imageTexture.load(":/smileface.png"))
             {
                 qDebug("MyOpenGLWidget::paintGL_TextureProgram()---> Create default image Texture.");
-                m_pTexture = new QOpenGLTexture(m_imageTexture.mirrored());
+                m_pTexture = new QOpenGLTexture(m_imageTexture);
                 m_bUpdateTexture  = false;
             }
         }
@@ -670,18 +703,18 @@ void MyOpenGLWidget::paintGL_TextureProgram()
                 delete m_pTexture;
 
                 //重建
-                m_pTexture = new QOpenGLTexture(m_imageTexture.mirrored());
+                m_pTexture = new QOpenGLTexture(m_imageTexture);
                 m_bUpdateTexture  = false;
             }
 
             //绑定纹理对象
-            m_pTexture->bind(0);
+            m_pTexture->bind(0);  //0---30 可改
 
             //绑定着色器
             if(m_pShaderProgram)
             {
                 m_pShaderProgram->bind();
-                m_pShaderProgram->setUniformValue("texSampler2D", 0);
+                m_pShaderProgram->setUniformValue("texSampler2D", 0);  //--对应绑定的纹理对象
                 m_pShaderProgram->setUniformValue("mat4MVP", m_Matrix4MVP);
             }
         }
@@ -766,6 +799,25 @@ void MyOpenGLWidget::paintGL_TextureProgram()
             m_pShaderProgramYUV->setUniformValue("texSampler2D_V", 2);
             m_pShaderProgramYUV->setUniformValue("mat4MVP", m_Matrix4MVP);
         }
+    }
+}
+
+void MyOpenGLWidget::drawGraphics()
+{
+    if(m_enGraphicsType == enPlane)  //平面
+    {
+        m_pVAOPlane->bind();
+        glDrawArrays(GL_TRIANGLE_FAN, 0, m_iVertexCount_Plane);
+    }
+    else if(m_enGraphicsType == enCube)  //立方体
+    {
+        m_pVAOCube->bind();
+        glDrawArrays(GL_TRIANGLES, 0, m_iVertexCount);
+    }
+    else if(m_enGraphicsType == enRectRing)  //矩形环
+    {
+        m_pVAORectRing->bind();
+        glDrawElements(GL_TRIANGLE_STRIP, m_iIndexRectRing, GL_UNSIGNED_SHORT, 0);
     }
 }
 
