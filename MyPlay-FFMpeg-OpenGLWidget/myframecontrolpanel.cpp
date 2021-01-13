@@ -55,6 +55,7 @@ CMyFrameControlPanel::CMyFrameControlPanel()
     //打开按钮
     m_pPushButton_OpenFile = new QPushButton();  //QStringLiteral("打开文件")
     m_pPushButton_OpenFile->setObjectName("Open");
+    m_pPushButton_OpenFile->setToolTip(QStringLiteral("选择影音文件"));
 
     //显示文件路径
     m_pLineEdit_FilePath   = new QLineEdit(":/smileface.png");
@@ -69,6 +70,11 @@ CMyFrameControlPanel::CMyFrameControlPanel()
     m_pPushButton_Plane = new QPushButton();  //QStringLiteral("平面")
     m_pPushButton_Voice = new QPushButton();  //音量
     m_pPushButton_SplitWindow  = new QPushButton();  //QStringLiteral("分割窗口")
+
+    m_pPushButton_Cube->setToolTip(QStringLiteral("立方体"));
+    m_pPushButton_Ring->setToolTip(QStringLiteral("梯形环"));
+    m_pPushButton_Plane->setToolTip(QStringLiteral("普通播放"));
+    m_pPushButton_SplitWindow->setToolTip(QStringLiteral("分割窗口"));
 
     m_pPushButton_Cube->setObjectName("Cube");
     m_pPushButton_Ring->setObjectName("Ring");
