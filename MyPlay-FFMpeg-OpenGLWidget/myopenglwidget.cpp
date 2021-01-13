@@ -679,11 +679,10 @@ void MyOpenGLWidget::paintGL_TextureProgram()
             if(m_bUpdateTexture)
             {
                 qDebug("MyOpenGLWidget::paintGL_TextureProgram()---> Create image Texture.");
-                //m_pTexture = new QOpenGLTexture(m_imageTexture.mirrored());
                 m_pTexture = new QOpenGLTexture(m_imageTexture);
                 m_bUpdateTexture  = false;
             }
-            else if(m_imageTexture.load(":/smileface.png"))
+            else if(m_imageTexture.load(":/picture/background-boxboy.jpg"))
             {
                 qDebug("MyOpenGLWidget::paintGL_TextureProgram()---> Create default image Texture.");
                 m_pTexture = new QOpenGLTexture(m_imageTexture);
