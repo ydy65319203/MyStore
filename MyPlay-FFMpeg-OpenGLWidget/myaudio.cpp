@@ -418,7 +418,7 @@ int CMyAudioOutput::setVolume(int iValue)
                                                QAudio::LinearVolumeScale);
     if(m_pAudioOutput)
     {
-        LOG(Info, "CMyAudioOutput::setVolume( iValue = %d )---> m_pAudioOutput->setVolume( linearVolume = %lf ); \n", iValue, linearVolume);
+        LOG(Debug, "CMyAudioOutput::setVolume( iValue = %d )---> m_pAudioOutput->setVolume( linearVolume = %lf ); \n", iValue, linearVolume);
         m_pAudioOutput->setVolume(linearVolume);
         m_iVolume = iValue;
     }
@@ -474,8 +474,8 @@ void CMyAudioOutput::OnStartAudioOutput()
     LOG(Info, "CMyAudioOutput::OnStartAudioOutput()---> m_pAudioOutput->bufferSize() = %d; \n", iBufferSize);
 
     //设置缓存大小
-    LOG(Info, "CMyAudioOutput::OnStartAudioOutput()---> m_pAudioOutput->setBufferSize(m_iFrameData=%d); \n", m_iFrameData);
-    m_pAudioOutput->setBufferSize(m_iFrameData);
+    //LOG(Info, "CMyAudioOutput::OnStartAudioOutput()---> m_pAudioOutput->setBufferSize(m_iFrameData=%d); \n", m_iFrameData);
+    //m_pAudioOutput->setBufferSize(m_iFrameData);
 
     //启动播放
     LOG(Info, "CMyAudioOutput::OnStartAudioOutput()---> m_pAudioOutput->start(this); \n");
