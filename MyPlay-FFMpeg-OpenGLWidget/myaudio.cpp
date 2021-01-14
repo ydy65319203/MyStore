@@ -406,7 +406,7 @@ int CMyAudioOutput::setAudioFormat(int iChannel, int iSampleRate, int iSampleFor
 
 int CMyAudioOutput::setVolume(int iValue)
 {
-    LOG(Debug, "CMyAudioOutput::setVolume( iValue=%d )... \n", iValue);
+    //LOG(Debug, "CMyAudioOutput::setVolume( iValue=%d )... \n", iValue);
 
     if(iValue == m_iVolume)
     {

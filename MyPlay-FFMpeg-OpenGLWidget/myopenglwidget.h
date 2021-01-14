@@ -112,7 +112,7 @@ protected:
 protected:
     //重写Widget的一些方法  //实现窗口可拖动
     //void mousePressEvent(QMouseEvent *event) override;
-    void mouseMoveEvent(QMouseEvent *event) override;
+    //void mouseMoveEvent(QMouseEvent *event) override;
     //void mouseReleaseEvent(QMouseEvent *event) override;
 
     void enterEvent(QEvent *event) override;  //进入QWidget瞬间事件

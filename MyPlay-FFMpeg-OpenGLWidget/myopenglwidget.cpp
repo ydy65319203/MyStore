@@ -106,7 +106,7 @@ void MyOpenGLWidget::setGraphicsTypeCube()
 
 void MyOpenGLWidget::setGraphicsTypePlane()
 {
-    //LOG(Info, "MyOpenGLWidget::setGraphicsTypePlane()---> setPlayState(enOpen); ");
+    //LOG(Info, "MyOpenGLWidget::setGraphicsTypePlane()---> setPlayState(enOpen); \n");
     //this->updatePlayState(enOpen);
 
     m_enGraphicsType = enPlane;
@@ -266,68 +266,69 @@ void MyOpenGLWidget::updateMyWindow()
     emit sig_updateMyWindow();
 }
 
-void MyOpenGLWidget::mouseMoveEvent(QMouseEvent *event)
-{
-    //LOG(Debug, "MyOpenGLWidget::mouseMoveEvent(x=%d, globalX=%d)... \n", event->x(), event->globalX());
+//void MyOpenGLWidget::mouseMoveEvent(QMouseEvent *event)
+//{
+//    LOG(Debug, "MyOpenGLWidget::mouseMoveEvent(x=%d, y=%d)... \n", event->x(), event->y());
 
-    if(m_bControlPanel && event->y() < m_rectControlPanel.y())
-    {
-        //Hide控制面板
-        if(m_pFrameControlPanel)
-        {
-            LOG(Debug, "MyOpenGLWidget::mouseMoveEvent(x=%d, globalX=%d)---> m_pFrameControlPanel->hide(); \n", event->x(), event->globalX());
-            ((QFrame*)m_pFrameControlPanel)->hide();
-            m_bControlPanel = false;
-        }
-    }
-    else if(!m_bControlPanel && event->y() > m_rectControlPanel.y())
-    {
-        //Show控制面板
-        if(m_pFrameControlPanel)
-        {
-            LOG(Debug, "MyOpenGLWidget::mouseMoveEvent(x=%d, globalX=%d)---> m_pFrameControlPanel->show(); \n", event->x(), event->globalX());
-            ((QFrame*)m_pFrameControlPanel)->show();
-            m_bControlPanel = true;
-        }
-    }
-}
+//    if(m_bControlPanel && event->y() <= 3)
+//    {
+//        //Hide控制面板
+//        if(m_pFrameControlPanel)
+//        {
+//            LOG(Debug, "MyOpenGLWidget::mouseMoveEvent(x=%d, y=%d)---> m_pFrameControlPanel->hide(); \n", event->x(), event->y());
+//            ((QFrame*)m_pFrameControlPanel)->hide();
+//            m_bControlPanel = false;
+//        }
+//    }
+//    else if(!m_bControlPanel && event->y() > m_rectControlPanel.y())
+//    {
+//        //Show控制面板
+//        if(m_pFrameControlPanel)
+//        {
+//            LOG(Debug, "MyOpenGLWidget::mouseMoveEvent(x=%d, y=%d)---> m_pFrameControlPanel->show(); \n", event->x(), event->y());
+//            ((QFrame*)m_pFrameControlPanel)->show();
+//            m_bControlPanel = true;
+//        }
+//    }
+//}
 
 void MyOpenGLWidget::enterEvent(QEvent *event)
 {
-    LOG(Debug, "MyOpenGLWidget::enterEvent( event->type() = %d )... \n", event->type());
+    //LOG(Debug, "MyOpenGLWidget::enterEvent( event->type() = %d )... \n", event->type());
 
     if(m_pFrameControlPanel)
     {
-//        m_rectControlPanel = ((QFrame*)m_pFrameControlPanel)->frameRect();
-//        LOG(Info, "MyOpenGLWidget::enterEvent()---> m_pFrameControlPanel->frameRect(); rect.x=%d, y=%d, width=%d, height=%d; \n",
+        //显示控制面板
+        //LOG(Debug, "MyOpenGLWidget::leaveEvent()---> m_pFrameControlPanel->show(); \n");
+        ((QFrame*)m_pFrameControlPanel)->show();
+        m_bControlPanel = true;
+
+//        m_bControlPanel =((QFrame*)m_pFrameControlPanel)->isVisible();
+//        m_rectControlPanel = ((QFrame*)m_pFrameControlPanel)->frameGeometry();
+//        LOG(Debug, "MyOpenGLWidget::enterEvent()---> m_pFrameControlPanel->frameGeometry(); rect.x=%d, y=%d, width=%d, height=%d; bVisible=%d; \n",
 //                   m_rectControlPanel.x(),
 //                   m_rectControlPanel.y(),
 //                   m_rectControlPanel.width(),
-//                   m_rectControlPanel.height());
-
-        m_bControlPanel =((QFrame*)m_pFrameControlPanel)->isVisible();
-        m_rectControlPanel = ((QFrame*)m_pFrameControlPanel)->frameGeometry();
-        LOG(Debug, "MyOpenGLWidget::enterEvent()---> m_pFrameControlPanel->frameGeometry(); rect.x=%d, y=%d, width=%d, height=%d; bVisible=%d; \n",
-                   m_rectControlPanel.x(),
-                   m_rectControlPanel.y(),
-                   m_rectControlPanel.width(),
-                   m_rectControlPanel.height(),
-                   m_bControlPanel);
+//                   m_rectControlPanel.height(),
+//                   m_bControlPanel);
     }
 
+    Q_UNUSED(event);
 }
 
 void MyOpenGLWidget::leaveEvent(QEvent *event)
 {
-    LOG(Debug, "MyOpenGLWidget::leaveEvent( event->type() = %d )... \n", event->type());
+    //LOG(Debug, "MyOpenGLWidget::leaveEvent( event->type() = %d )... \n", event->type());
 
     if(m_bControlPanel && m_pFrameControlPanel)
     {
         //Hide控制面板
-        LOG(Debug, "MyOpenGLWidget::leaveEvent()---> m_pFrameControlPanel->hide(); \n");
+        //LOG(Debug, "MyOpenGLWidget::leaveEvent()---> m_pFrameControlPanel->hide(); \n");
         ((QFrame*)m_pFrameControlPanel)->hide();
         m_bControlPanel = false;
     }
+
+    Q_UNUSED(event);
 }
 
 //槽函数,响应信号: sig_updateMyWindow
@@ -373,7 +374,7 @@ void MyOpenGLWidget::initializeGL()
 
     GLint iDefaultFrameBuffer;
     glGetIntegerv(GL_FRAMEBUFFER_BINDING, &iDefaultFrameBuffer);
-    qDebug("MyOpenGLWidget::initializeGL()---> glGetIntegerv(GL_FRAMEBUFFER_BINDING, &iDefaultFrameBuffer) = %d;", iDefaultFrameBuffer);
+    LOG(Info, "MyOpenGLWidget::initializeGL()---> glGetIntegerv(GL_FRAMEBUFFER_BINDING, &iDefaultFrameBuffer) = %d; \n", iDefaultFrameBuffer);
 }
 
 void MyOpenGLWidget::paintGL()
@@ -446,11 +447,11 @@ void MyOpenGLWidget::initShaders()
     bool bRet = m_pShaderProgram->link();
     if(bRet)
     {
-        LOG(Info, "MyOpenGLWidget::initShaders()---> m_pShaderProgram->link() succ.");
+        LOG(Info, "MyOpenGLWidget::initShaders()---> m_pShaderProgram->link() succ. \n");
     }
     else
     {
-        LOG(Info, "MyOpenGLWidget::initShaders()---> m_pShaderProgram->link() fail.");
+        LOG(Warn, "MyOpenGLWidget::initShaders()---> m_pShaderProgram->link() fail. \n");
     }
 
     m_pShaderProgramYUV = new QOpenGLShaderProgram();
@@ -459,11 +460,11 @@ void MyOpenGLWidget::initShaders()
     bool bRetYUV = m_pShaderProgramYUV->link();
     if(bRetYUV)
     {
-        LOG(Info, "MyOpenGLWidget::initShaders()---> m_pShaderProgramYUV->link() succ.");
+        LOG(Info, "MyOpenGLWidget::initShaders()---> m_pShaderProgramYUV->link() succ. \n");
     }
     else
     {
-        LOG(Info, "MyOpenGLWidget::initShaders()---> m_pShaderProgramYUV->link() fail.");
+        LOG(Warn, "MyOpenGLWidget::initShaders()---> m_pShaderProgramYUV->link() fail. \n");
     }
 }
 
@@ -536,7 +537,7 @@ void MyOpenGLWidget::initVertexCube()
     m_pShaderProgram->enableAttributeArray(m_pShaderProgram->attributeLocation("vec2TexurePos"));
 
     m_iVertexCount = sizeof(GLfVertexCube)/sizeof(GLfVertexCube[0])/5;
-    LOG(Info, "MyOpenGLWidget::initVertexCube()---> sizeof(GLfVertexCube) = %d; m_iVertexCount = %d;", sizeof(GLfVertexCube), m_iVertexCount);
+    LOG(Info, "MyOpenGLWidget::initVertexCube()---> sizeof(GLfVertexCube) = %d; m_iVertexCount = %d; \n", sizeof(GLfVertexCube), m_iVertexCount);
 
 //    QOpenGLFunctions *pOpenGLFunctions = this->context()->functions();
 //    pOpenGLFunctions->glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, (3+2)*sizeof(GLfloat), 0);
@@ -578,7 +579,7 @@ void MyOpenGLWidget::initVertexPlane()
     m_pShaderProgram->enableAttributeArray(m_pShaderProgram->attributeLocation("vec2TexurePos"));
 
     m_iVertexCount_Plane = sizeof(GLfVertexPlane)/sizeof(GLfVertexPlane[0])/5;
-    LOG(Info, "MyOpenGLWidget::initVertexPlane()---> sizeof(GLfVertexPlane) = %d; m_iVertexCount = %d;", sizeof(GLfVertexPlane), m_iVertexCount_Plane);
+    LOG(Info, "MyOpenGLWidget::initVertexPlane()---> sizeof(GLfVertexPlane) = %d; m_iVertexCount = %d; \n", sizeof(GLfVertexPlane), m_iVertexCount_Plane);
 }
 
 
@@ -642,7 +643,7 @@ void MyOpenGLWidget::initVertexRectRing()
 
     m_iVertexRectRing = sizeof(GLfVertexRectRing)/sizeof(GLfVertexRectRing[0])/5;
     m_iIndexRectRing = sizeof(GluIndexRectRing)/sizeof(GluIndexRectRing[0]);
-    LOG(Info, "MyOpenGLWidget::initVertexRectRing()---> sizeof(GLfVertexRectRing) = %d; m_iVertexCount = %d; m_iIndexCount = %d;", sizeof(GLfVertexRectRing), m_iVertexRectRing, m_iIndexRectRing);
+    LOG(Info, "MyOpenGLWidget::initVertexRectRing()---> sizeof(GLfVertexRectRing) = %d; m_iVertexCount = %d; m_iIndexCount = %d; \n", sizeof(GLfVertexRectRing), m_iVertexRectRing, m_iIndexRectRing);
 }
 
 //初始化纹理
@@ -678,13 +679,13 @@ void MyOpenGLWidget::paintGL_TextureProgram()
         {
             if(m_bUpdateTexture)
             {
-                qDebug("MyOpenGLWidget::paintGL_TextureProgram()---> Create image Texture.");
+                LOG(Info, "MyOpenGLWidget::paintGL_TextureProgram()---> Create image Texture. \n");
                 m_pTexture = new QOpenGLTexture(m_imageTexture);
                 m_bUpdateTexture  = false;
             }
             else if(m_imageTexture.load(":/picture/background-boxboy.jpg"))
             {
-                qDebug("MyOpenGLWidget::paintGL_TextureProgram()---> Create default image Texture.");
+                LOG(Info, "MyOpenGLWidget::paintGL_TextureProgram()---> Create default image Texture. \n");
                 m_pTexture = new QOpenGLTexture(m_imageTexture);
                 m_bUpdateTexture  = false;
             }
@@ -695,7 +696,7 @@ void MyOpenGLWidget::paintGL_TextureProgram()
             //更新Image纹理
             if(m_bUpdateTexture)
             {
-                qDebug("MyOpenGLWidget::paintGL_TextureProgram()---> Modify image Texture.");
+                LOG(Info, "MyOpenGLWidget::paintGL_TextureProgram()---> Modify image Texture. \n");
 
                 //销毁
                 m_pTexture->destroy();
@@ -726,10 +727,10 @@ void MyOpenGLWidget::paintGL_TextureProgram()
             m_iYFrameSize = m_iHeight * m_iWidth;  //计算Y分量的帧尺寸
             m_iUFrameSize = m_iYFrameSize / 4;     //YUV420P格式: YUV=4:1:1
 
-            qDebug("MyOpenGLWidget::paintGL_TextureProgram()---> Create YUV Texture.");
+            LOG(Info, "MyOpenGLWidget::paintGL_TextureProgram()---> Create YUV Texture. \n");
             m_bUpdateTextureYUV = false;
             glGenTextures(3, m_uTextureId);
-            qDebug("MyOpenGLWidget::paintGL_TextureProgram()---> m_uTextureId[0]=%u, m_uTextureId[1]=%u, m_uTextureId[2]=%u;", m_uTextureId[0], m_uTextureId[1], m_uTextureId[2]);
+            LOG(Info, "MyOpenGLWidget::paintGL_TextureProgram()---> m_uTextureId[0]=%u, m_uTextureId[1]=%u, m_uTextureId[2]=%u; \n", m_uTextureId[0], m_uTextureId[1], m_uTextureId[2]);
 
             glActiveTexture(GL_TEXTURE0);
             glBindTexture(GL_TEXTURE_2D, m_uTextureId[0]);  // 为当前绑定的纹理对象设置环绕、过滤方式

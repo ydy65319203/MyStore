@@ -84,8 +84,11 @@ CMyFrameControlPanel::CMyFrameControlPanel()
 
     m_pSliderVolume = new QSlider(Qt::Horizontal);  //音量条
     m_pSliderVolume->setValue(0);
-	m_pSliderVolume->setMinimum(0);
+    m_pSliderVolume->setMinimum(0);
     m_pSliderVolume->setMaximum(100);
+    //m_pSliderVolume->setMinimumWidth(10);
+    //m_pSliderVolume->setMaximumWidth(70);
+    m_pSliderVolume->setFixedWidth(70);
     m_pSliderVolume->setSingleStep(1);
     m_pSliderVolume->setObjectName("Volume");
 
