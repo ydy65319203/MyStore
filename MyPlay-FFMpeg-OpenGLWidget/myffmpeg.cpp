@@ -363,7 +363,7 @@ void CMyFFmpeg::thread_OpenAVFile()
     int iMinute = iTotalSeconds % 3600 / 60;//分钟
     int iSecond = iTotalSeconds % 60;//秒
 
-    LOG(Info, "AVFormatContext: duration=%ld [%02d:%02d:%02d], nb_streams=%d, start_time=%d, bit_rate=%d, packet_size=%d, max_delay=%d, \n",
+    LOG(Info, "AVFormatContext: duration=0x%X [%02d:%02d:%02d], nb_streams=%u, start_time=%u, bit_rate=%u, packet_size=%u, max_delay=%d, \n",
         m_pAVFormatCtx->duration,
         iHour, iMinute, iSecond,
         m_pAVFormatCtx->nb_streams,
@@ -387,12 +387,11 @@ void CMyFFmpeg::thread_OpenAVFile()
     {
         pStream = m_pAVFormatCtx->streams[iIndex];
 
-        LOG(Info, "AVStream[%d]: time_base=%d/%d, start_time=%lld, duration=%lld, duration=%p; nb_frames=%lld, sample_aspect_ratio=%d/%d, avg_frame_rate=%d/%d, r_frame_rate=%d/%d; \n",
+        LOG(Info, "AVStream[%d]: time_base=%d/%d, start_time=%u, duration=0x%X, nb_frames=%u, sample_aspect_ratio=%d/%d, avg_frame_rate=%d/%d, r_frame_rate=%d/%d; \n",
             pStream->index,
             pStream->time_base.num,
             pStream->time_base.den,
             pStream->start_time,
-            pStream->duration,
             pStream->duration,
 
             pStream->nb_frames,
@@ -441,7 +440,7 @@ void CMyFFmpeg::thread_OpenAVFile()
             continue;
         }
 
-        LOG(Info, "AVCodecContext: time_base=%d/%d, ticks_per_frame=%d, name=%s, codec_id=%d, codec_type=%d, bit_rate=%lld, delay=%d, width=%d, height=%d, coded_width=%d, coded_height=%d, gop_size=%d, pix_fmt=%d, sample_fmt=%d, sample_rate=%d, channels=%d, channel_layout=%d, frame_size=%d, frame_number=%d, framerate=%d/%d; \n",
+        LOG(Info, "AVCodecContext: time_base=%d/%d, ticks_per_frame=%d, name=%s, codec_id=%d, codec_type=%d, bit_rate=0x%X, delay=%d, width=%d, height=%d, coded_width=%d, coded_height=%d, gop_size=%d, pix_fmt=%d, sample_fmt=%d, sample_rate=%d, channels=%d, channel_layout=%d, frame_size=%d, frame_number=%d, framerate=%d/%d; \n",
             pCodecCtx->time_base.num,
             pCodecCtx->time_base.den,
             pCodecCtx->ticks_per_frame,
@@ -495,14 +494,14 @@ void CMyFFmpeg::thread_OpenAVFile()
 
                 //视频帧时间基
                 m_dVideoTimebase = av_q2d(pStream->time_base) * 1000;
-                LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> m_iVideoStreamDuration = %p; m_dVideoTimebase = av_q2d(pAVStream->time_base=%d/%d) * 1000 = %fms; \n",
+                LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> m_iVideoStreamDuration=0x%X; m_dVideoTimebase = av_q2d(pAVStream->time_base=%d/%d) * 1000 = %fms; \n",
                           m_iVideoStreamDuration,
                           pStream->time_base.num,
                           pStream->time_base.den,
                           m_dVideoTimebase);
 
                 //上报视频流总时长
-                LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> m_pMyVideoOutput->setVideoStreamDuration(num=%d, den=%d, m_iVideoStreamDuration=%p); \n", pStream->time_base.num, pStream->time_base.den, m_iVideoStreamDuration);
+                LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> m_pMyVideoOutput->setVideoStreamDuration(num=%d, den=%d, m_iVideoStreamDuration=0x%X); \n", pStream->time_base.num, pStream->time_base.den, m_iVideoStreamDuration);
                 m_pMyVideoOutput->setVideoStreamDuration(pStream->time_base.num, pStream->time_base.den, m_iVideoStreamDuration);
 
                 //Enable播放按钮
@@ -541,14 +540,14 @@ void CMyFFmpeg::thread_OpenAVFile()
 
                 //音频帧时间基
                 m_dAudioTimebase = av_q2d(pStream->time_base) * 1000;
-                LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> m_iAudioStreamDuration = %p; m_dAudioTimebase = av_q2d(pAVStream->time_base=%d/%d) * 1000 = %fms; \n",
+                LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> m_iAudioStreamDuration=0x%X; m_dAudioTimebase = av_q2d(pAVStream->time_base=%d/%d) * 1000 = %fms; \n",
                           m_iAudioStreamDuration,
                           pStream->time_base.num,
                           pStream->time_base.den,
                           m_dAudioTimebase);
 
                 //上报音频流总时长
-                LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> m_pMyAudioOutput->setAudioStreamDuration(num=%d, den=%d, m_iAudioStreamDuration=%p); \n", pStream->time_base.num, pStream->time_base.den, m_iAudioStreamDuration);
+                LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> m_pMyAudioOutput->setAudioStreamDuration(num=%d, den=%d, m_iAudioStreamDuration=0x%X); \n", pStream->time_base.num, pStream->time_base.den, m_iAudioStreamDuration);
                 m_pMyAudioOutput->setAudioStreamDuration(pStream->time_base.num, pStream->time_base.den, m_iAudioStreamDuration);
 
                 //上报播放状态
@@ -761,7 +760,7 @@ void CMyFFmpeg::thread_UnPacket()
             LOG(Debug, "CMyFFmpeg::thread_UnPacket()---> av_read_frame(m_pAVFormatCtx, pAVPacket) = %d; \n", iPacketState);
 
             //写日志
-            LOG(Debug, "CMyFFmpeg::thread_UnPacket()---> AVPacket[%d]: time_base=%d/%d, flags=0x%x, pts=%ld, dts=%ld, duration=%ld, pos=%ld, size=%d; \r\n",
+            LOG(Debug, "CMyFFmpeg::thread_UnPacket()---> AVPacket[%d]: time_base=%d/%d, flags=%d, pts=0x%X, dts=0x%X, duration=0x%X, pos=0x%X, size=%d; \n",
                     pAVPacket->stream_index,
                     m_pAVFormatCtx->streams[pAVPacket->stream_index]->time_base.num,
                     m_pAVFormatCtx->streams[pAVPacket->stream_index]->time_base.den,

@@ -218,8 +218,8 @@ void MyOpenGLWidget::setVideoStreamDuration(int iNum, int iDen, int64_t iVideoSt
         m_iReportTotal = 0x7FFFFFFF;
     }
 
-    LOG(Info, "MyOpenGLWidget::setVideoStreamDuration()---> iVideoStreamDuration[0x%X] = [%02d:%02d:%02d]; m_iReportTotal = %d, m_iReportInterval = %d; \n",
-              iVideoStreamDuration, iHour, iMinute, iSecond, m_iReportTotal, m_iReportInterval);
+    LOG(Info, "MyOpenGLWidget::setVideoStreamDuration()---> iVideoStreamDuration[0x%X] = [%02d:%02d:%02d]; m_iReportInterval[pts] = %d, m_iReportTotal[step] = %d; \n",
+              iVideoStreamDuration, iHour, iMinute, iSecond, m_iReportInterval, m_iReportTotal);
 }
 
 //AVPixelFormat: AV_PIX_FMT_YUV420P=0; AV_PIX_FMT_RGB24=2;

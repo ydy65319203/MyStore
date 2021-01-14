@@ -332,8 +332,8 @@ void CMyAudioOutput::setAudioStreamDuration(int iNum, int iDen, int64_t iAudioSt
         m_iReportTotal = 0x7FFFFFFF;
     }
 
-    LOG(Info, "CMyAudioOutput::setAudioStreamDuration()---> iAudioStreamDuration[0x%X] = [%02d:%02d:%02d]; m_iReportTotal = %d, m_iReportInterval = %d; \n",
-              iAudioStreamDuration, iHour, iMinute, iSecond, m_iReportTotal, m_iReportInterval);
+    LOG(Info, "CMyAudioOutput::setAudioStreamDuration()---> iAudioStreamDuration[0x%X] = [%02d:%02d:%02d]; m_iReportInterval[pts] = %d, m_iReportTotal[step] = %d; \n",
+              iAudioStreamDuration, iHour, iMinute, iSecond, m_iReportInterval, m_iReportTotal);
 }
 
 int CMyAudioOutput::setAudioFormat(int iChannel, int iSampleRate, int iSampleFormat)
@@ -597,6 +597,11 @@ qint64 CMyAudioOutput::writeData(const char *data, qint64 len)
 qint64 CMyAudioOutput::readData(char *data, qint64 maxlen)
 {
     LOG(Debug, "CMyAudioOutput::readData(char *data, maxlen=%d)... \n", maxlen);
+
+    if(maxlen < 1)
+    {
+        return 0;
+    }
 
     char *pData = data;
     qint64 iData = maxlen;

@@ -44,6 +44,11 @@ private:
     void thread_Audio();
 
 private:
+    MyOpenGLWidget *m_pMyVideoOutput;  //视频输出
+    CMyAudioOutput *m_pMyAudioOutput;  //音频输出
+
+    string m_sstrAVFilePath;  //AV文件名
+
     AVFormatContext	*m_pAVFormatCtx;
     AVCodecContext	*m_pVideoCodecCtx;
     AVCodecContext	*m_pAudioCodecCtx;
@@ -55,11 +60,6 @@ private:
     //AVPacket *m_pAVPacket;
     //AVFrame  *m_pAVFrameYUV;
     //AVFrame  *m_pAVFrame;
-
-    MyOpenGLWidget *m_pMyVideoOutput;  //显示视频
-    CMyAudioOutput *m_pMyAudioOutput;  //播放音频
-
-    string m_sstrAVFilePath;  //AV文件名
 
     //------------------------------------
 
