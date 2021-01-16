@@ -662,11 +662,11 @@ qint64 CMyAudioOutput::readData(char *data, qint64 maxlen)
 
                 //iDuration = m_iDuration;
 
-                if (iDuration == 0)
-                {
-                    iPts = 0x7FFFFFFF;
-                    iDts = 0x7FFFFFFF;
-                }
+                //if (iDuration == 0)
+                //{
+                //    iPts = 0x7FFFFFFF;
+                //    iDts = 0x7FFFFFFF;
+                //}
             }
         }
 

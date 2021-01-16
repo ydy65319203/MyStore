@@ -16,6 +16,9 @@ CMyFFmpeg::CMyFFmpeg()
     LOG(Info, "CMyFFmpeg::CMyFFmpeg()---> avdevice_register_all(); \n");
     avdevice_register_all();
 
+    m_pMyVideoOutput = NULL;
+    m_pMyAudioOutput = NULL;
+
     m_pAVFormatCtx = NULL;
     m_pVideoCodecCtx = NULL;
     m_pAudioCodecCtx = NULL;
@@ -24,37 +27,20 @@ CMyFFmpeg::CMyFFmpeg()
     m_pImageConvertCtx = NULL;
     m_pAudioConvertCtx = NULL;
 
-    m_pMyVideoOutput = NULL;
-    m_pMyAudioOutput = NULL;
-
     //------------------------------------
 
-    m_iPacketMaxCount = 0;  //音视频包最大缓存数量
+    m_iVideoListDuration = 0;
+    m_iAudioListDuration = 0;
 
     m_dVideoTimebase = 0;
     m_dAudioTimebase = 0;
-
-    m_dVideoDuration = 0;  //视频帧间隔
-    m_dAudioDuration = 0;  //音频帧时长
-
-    m_iVideoPts = -9999;
-    m_iAudioPts = -9999;
-
-    m_iVideoDuration = 0;
-    m_iAudioDuration = 0;
-
-    m_iVideoPktDuration = 0;
-    m_iAudioPktDuration = 0;
-
-    m_dwVideoDelay = 0;  //视频线程睡眠时长(毫秒)
-    m_dwAudioDelay = 0;  //音频线程睡眠时长(毫秒)
 
     m_iVideoStream = -1;
     m_iAudioStream = -1;
     m_iSubTitleStream = -1;
 
     m_bPause = false;
-    m_bClose = true;
+    m_bClose = false;
 }
 
 CMyFFmpeg::~CMyFFmpeg()
@@ -291,25 +277,11 @@ void CMyFFmpeg::closeAVFile()
 
     //---------------------------------------------------
 
-    m_iPacketMaxCount = 0;  //音视频包最大缓存数量
+    m_iVideoListDuration = 0;
+    m_iAudioListDuration = 0;
 
     m_dVideoTimebase = 0;
     m_dAudioTimebase = 0;
-
-    m_dVideoDuration = 0;  //视频帧间隔
-    m_dAudioDuration = 0;  //音频帧时长
-
-    m_iVideoPts = -9999;
-    m_iAudioPts = -9999;
-
-    m_iVideoDuration = 0;
-    m_iAudioDuration = 0;
-
-    m_iVideoPktDuration = 0;
-    m_iAudioPktDuration = 0;
-
-    m_dwVideoDelay = 0;  //视频线程睡眠时长(毫秒)
-    m_dwAudioDelay = 0;  //音频线程睡眠时长(毫秒)
 
     m_iVideoStream = -1;
     m_iAudioStream = -1;
@@ -381,6 +353,9 @@ void CMyFFmpeg::thread_OpenAVFile()
     AVCodecContext *pCodecCtx = NULL;
     AVStream *pStream = NULL;
     AVCodec *pCodec = NULL;
+
+    //int64_t iVideoStreamDuration;  //视频流总时长
+    //int64_t iAudioStreamDuration;  //音频流总时长
 
     //分解流
     for (unsigned int iIndex = 0; iIndex < m_pAVFormatCtx->nb_streams; ++iIndex)
@@ -481,28 +456,28 @@ void CMyFFmpeg::thread_OpenAVFile()
                 m_pVideoCodecCtx = pCodecCtx;
 
                 //视频流时长
-                m_iVideoStreamDuration = pStream->duration;
-                if(m_iVideoStreamDuration < 1)
+                int64_t iVideoStreamDuration = pStream->duration;
+                if(iVideoStreamDuration < 1)
                 {
                     //取容器时长，按照流的时间基转换。
                     //AVRational AVTimeBaseQ = AV_TIME_BASE_Q;
                     AVRational AVTimeBase;
                     AVTimeBase.num = 1;
                     AVTimeBase.den = AV_TIME_BASE;
-                    m_iVideoStreamDuration = av_rescale_q(m_pAVFormatCtx->duration, AVTimeBase, pStream->time_base);
+                    iVideoStreamDuration = av_rescale_q(m_pAVFormatCtx->duration, AVTimeBase, pStream->time_base);
                 }
 
                 //视频帧时间基
                 m_dVideoTimebase = av_q2d(pStream->time_base) * 1000;
-                LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> m_iVideoStreamDuration=0x%X; m_dVideoTimebase = av_q2d(pAVStream->time_base=%d/%d) * 1000 = %fms; \n",
-                          m_iVideoStreamDuration,
+                LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> iVideoStreamDuration=0x%X; m_dVideoTimebase = av_q2d(pAVStream->time_base=%d/%d) * 1000 = %fms; \n",
+                          iVideoStreamDuration,
                           pStream->time_base.num,
                           pStream->time_base.den,
                           m_dVideoTimebase);
 
                 //上报视频流总时长
-                LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> m_pMyVideoOutput->setVideoStreamDuration(num=%d, den=%d, m_iVideoStreamDuration=0x%X); \n", pStream->time_base.num, pStream->time_base.den, m_iVideoStreamDuration);
-                m_pMyVideoOutput->setVideoStreamDuration(pStream->time_base.num, pStream->time_base.den, m_iVideoStreamDuration);
+                LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> m_pMyVideoOutput->setVideoStreamDuration(num=%d, den=%d, iVideoStreamDuration=0x%X); \n", pStream->time_base.num, pStream->time_base.den, iVideoStreamDuration);
+                m_pMyVideoOutput->setVideoStreamDuration(pStream->time_base.num, pStream->time_base.den, iVideoStreamDuration);
 
                 //Enable播放按钮
                 LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> m_pMyVideoOutput->updatePlayState(enOpen=%d); \n", enOpen);
@@ -528,27 +503,27 @@ void CMyFFmpeg::thread_OpenAVFile()
                 m_pAudioCodecCtx = pCodecCtx;
 
                 //视频流时长
-                m_iAudioStreamDuration = pStream->duration;
-                if(m_iAudioStreamDuration < 1)
+                int64_t iAudioStreamDuration = pStream->duration;
+                if(iAudioStreamDuration < 1)
                 {
                     //取容器时长，按照流的时间基转换。
                     AVRational AVTimeBase;
                     AVTimeBase.num = 1;
                     AVTimeBase.den = AV_TIME_BASE;
-                    m_iAudioStreamDuration = av_rescale_q(m_pAVFormatCtx->duration, AVTimeBase, pStream->time_base);
+                    iAudioStreamDuration = av_rescale_q(m_pAVFormatCtx->duration, AVTimeBase, pStream->time_base);
                 }
 
                 //音频帧时间基
                 m_dAudioTimebase = av_q2d(pStream->time_base) * 1000;
-                LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> m_iAudioStreamDuration=0x%X; m_dAudioTimebase = av_q2d(pAVStream->time_base=%d/%d) * 1000 = %fms; \n",
-                          m_iAudioStreamDuration,
+                LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> iAudioStreamDuration=0x%X; m_dAudioTimebase = av_q2d(pAVStream->time_base=%d/%d) * 1000 = %fms; \n",
+                          iAudioStreamDuration,
                           pStream->time_base.num,
                           pStream->time_base.den,
                           m_dAudioTimebase);
 
                 //上报音频流总时长
-                LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> m_pMyAudioOutput->setAudioStreamDuration(num=%d, den=%d, m_iAudioStreamDuration=0x%X); \n", pStream->time_base.num, pStream->time_base.den, m_iAudioStreamDuration);
-                m_pMyAudioOutput->setAudioStreamDuration(pStream->time_base.num, pStream->time_base.den, m_iAudioStreamDuration);
+                LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> m_pMyAudioOutput->setAudioStreamDuration(num=%d, den=%d, iAudioStreamDuration=0x%X); \n", pStream->time_base.num, pStream->time_base.den, iAudioStreamDuration);
+                m_pMyAudioOutput->setAudioStreamDuration(pStream->time_base.num, pStream->time_base.den, iAudioStreamDuration);
 
                 //上报播放状态
                 LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> m_pMyAudioOutput->updatePlayState(enOpen=%d); \n", enOpen);
@@ -614,18 +589,25 @@ void CMyFFmpeg::thread_UnPacket()
         return;
     }
 
-    AVPacket *pAVPacket = NULL;
-    size_t iPacketVideo = 0;
-    size_t iPacketAudio = 0;
+    int64_t iVideoDts = 0;  //视频DTS, Duration=0时计算包间隔
+    int64_t iAudioDts = 0;  //音频DTS
 
-    int iVideoFullDelay = 0;  //视频队列满载时睡眠时长(毫秒)
+    int64_t iVideoDuration = 0;  //视频包间隔。
+    int64_t iAudioDuration = 0;  //音频包间隔。
+
+    size_t iVideoPacketCount = 0;  //链表中包数量
+    size_t iAudioPacketCount = 0;
+
+    size_t iVideoPacketMaxCount = 50;   //视频包最大缓存数量
+    size_t iAudioPacketMaxCount = 100;  //音频包最大缓存数量
+
+    AVPacket *pAVPacket = NULL;
+
+    int iVideoFullDelay = 0;  //视频链表满载时睡眠时长(毫秒)
     int iAudioFullDelay = 0;
     int iDelay = 0;
 
     int iPacketState = 0;
-
-    m_iPacketMaxCount = 25;  //音视频包最大缓存数量
- 
 
     while (!m_bClose)
     {
@@ -638,18 +620,18 @@ void CMyFFmpeg::thread_UnPacket()
         }
 
         //视频队列满
-        if (iPacketVideo >= m_iPacketMaxCount)
+        if (iVideoPacketCount >= iVideoPacketMaxCount)
         {
             //计算视频队列满时长
             if (iVideoFullDelay < 100)
             {
-                iVideoFullDelay = (int)(m_dVideoTimebase * m_iVideoPktDuration * (iPacketVideo - 2));
-                LOG(Debug, "CMyFFmpeg::thread_UnPacket()---> (m_dVideoTimebase[%lf] * m_iVideoPktDuration[%d] * iPacketVideo[%d - 2]) = iVideoFullDelay[%d]; \n", m_dVideoTimebase, m_iVideoPktDuration, iPacketVideo, iVideoFullDelay);
+                iVideoFullDelay = (m_dVideoTimebase * iVideoDuration * 0.5);
+                LOG(Debug, "CMyFFmpeg::thread_UnPacket()---> SET (m_dVideoTimebase[%lf] * m_iVideoListDuration[%d] * 0.5) = iVideoFullDelay[%d]; \n", m_dVideoTimebase, iVideoDuration, iVideoFullDelay);
             }
 
             //计算音频队列时长
-            int iAudioDelay = (int)(m_dAudioTimebase * m_iAudioPktDuration * iPacketAudio * 0.5);
-            if (0 < iAudioDelay && iAudioDelay < iVideoFullDelay)
+            int iAudioDelay = (m_dAudioTimebase * iAudioDuration * 0.5);
+            if (iAudioDelay < iVideoFullDelay)
             {
                 iDelay = iAudioDelay;
             }
@@ -659,21 +641,21 @@ void CMyFFmpeg::thread_UnPacket()
             }
 
             //睡一会儿
-            if (iDelay > 40)
+            if (iDelay > 20)
             {
-                LOG(Debug, "CMyFFmpeg::thread_UnPacket()---> iVideoDelay[%d]=%d; iAudioDelay[%d]=%d; Sleep(%dms); \n\n", iPacketVideo, iVideoFullDelay, iPacketAudio, iAudioDelay, iDelay);
+                LOG(Debug, "CMyFFmpeg::thread_UnPacket()---> iVideoDelay[%d]=%dms; iAudioDelay[%d]=%dms; Sleep(%dms); \n\n", iVideoPacketCount, iVideoFullDelay, iAudioPacketCount, iAudioDelay, iDelay);
                 Sleep(iDelay);
             }
             else
             {
-                iDelay = 40;
-                LOG(Warn, "CMyFFmpeg::thread_UnPacket()---> iVideoDelay[%d]=%d; iAudioDelay[%d]=%d; Sleep(%dms); \n\n", iPacketVideo, iVideoFullDelay, iPacketAudio, iAudioDelay, iDelay);
+                iDelay = 20;
+                LOG(Warn, "CMyFFmpeg::thread_UnPacket()---> iVideoDelay[%d]=%dms; iAudioDelay[%d]=%dms; Sleep(%dms); \n\n", iVideoPacketCount, iVideoFullDelay, iAudioPacketCount, iAudioDelay, iDelay);
                 Sleep(iDelay);
             }
 
             //视频Packet列表
             m_MutexPacketVideo.lock();  //--加锁
-            iPacketVideo = m_listPacketVideo.size();
+            iVideoPacketCount = m_listPacketVideo.size();
             m_MutexPacketVideo.unlock();  //--解锁
 
             //继续
@@ -681,18 +663,18 @@ void CMyFFmpeg::thread_UnPacket()
         }
 
         //音频队列满
-        if(iPacketAudio >= m_iPacketMaxCount)
+        if(iAudioPacketCount >= iAudioPacketMaxCount)
         {
             //计算音频队列满时长
             if (iAudioFullDelay < 100)
             {
-                iAudioFullDelay = (int)(m_dAudioTimebase * m_iAudioPktDuration * iPacketAudio * 0.5);
-                LOG(Debug, "CMyFFmpeg::thread_UnPacket()---> (m_dAudioTimebase[%lf] * m_iAudioPktDuration[%d] * iPacketAudio[%d] * 0.5) = iAudioFullDelay[%d]; \n", m_dAudioTimebase, m_iAudioPktDuration, iPacketAudio, iAudioFullDelay);
+                iAudioFullDelay = (m_dAudioTimebase * iAudioDuration * 0.5);
+                LOG(Debug, "CMyFFmpeg::thread_UnPacket()---> SET (m_dAudioTimebase[%lf] * m_iAudioListDuration[%d] * 0.5) = iAudioFullDelay[%d]; \n", m_dAudioTimebase, iAudioDuration, iAudioFullDelay);
             }
 
             //计算视频队列时长
-            int iVideoDelay = (int)(m_dVideoTimebase * m_iVideoPktDuration * (iPacketVideo - 2));
-            if (0 < iVideoDelay && iVideoDelay < iAudioFullDelay)
+            int iVideoDelay = (m_dVideoTimebase * iVideoDuration * 0.5);
+            if (iVideoDelay < iAudioFullDelay)
             {
                 iDelay = iVideoDelay;
             }
@@ -702,21 +684,21 @@ void CMyFFmpeg::thread_UnPacket()
             }
 
             //睡一会儿
-            if (iDelay > 10)
+            if (iDelay > 20)
             {
-                LOG(Debug, "CMyFFmpeg::thread_UnPacket()---> iVideoDelay[%d]=%d; iAudioDelay[%d]=%d; Sleep(%dms); \n\n", iPacketVideo, iVideoDelay, iPacketAudio, iAudioFullDelay, iDelay);
+                LOG(Debug, "CMyFFmpeg::thread_UnPacket()---> iVideoDelay[%d]=%dms; iAudioDelay[%d]=%dms; Sleep(%dms); \n\n", iVideoPacketCount, iVideoDelay, iAudioPacketCount, iAudioFullDelay, iDelay);
                 Sleep(iDelay);
             }
             else
             {
-                iDelay = 50;
-                LOG(Warn, "CMyFFmpeg::thread_UnPacket()---> iVideoDelay[%d]=%d; iAudioDelay[%d]=%d; Sleep(%dms); \n\n", iPacketVideo, iVideoDelay, iPacketAudio, iAudioFullDelay, iDelay);
+                iDelay = 20;
+                LOG(Warn, "CMyFFmpeg::thread_UnPacket()---> iVideoDelay[%d]=%dms; iAudioDelay[%d]=%dms; Sleep(%dms); \n\n", iVideoPacketCount, iVideoDelay, iAudioPacketCount, iAudioFullDelay, iDelay);
                 Sleep(iDelay);
             }
 
             //音频Packet列表
             m_MutexPacketAudio.lock();  //--加锁
-            iPacketAudio = m_listPacketAudio.size();
+            iAudioPacketCount = m_listPacketAudio.size();
             m_MutexPacketAudio.unlock();  //--解锁
 
             //继续
@@ -760,7 +742,7 @@ void CMyFFmpeg::thread_UnPacket()
             LOG(Debug, "CMyFFmpeg::thread_UnPacket()---> av_read_frame(m_pAVFormatCtx, pAVPacket) = %d; \n", iPacketState);
 
             //写日志
-            LOG(Debug, "CMyFFmpeg::thread_UnPacket()---> AVPacket[%d]: time_base=%d/%d, flags=%d, pts=0x%X, dts=0x%X, duration=0x%X, pos=0x%X, size=%d; \n",
+            LOG(Debug, "CMyFFmpeg::thread_UnPacket()---> AVPacket[%d]: time_base=%d/%d, flags=%d, pts=0x%p, dts=0x%X, duration=0x%X, pos=0x%X, size=%d; \n",
                     pAVPacket->stream_index,
                     m_pAVFormatCtx->streams[pAVPacket->stream_index]->time_base.num,
                     m_pAVFormatCtx->streams[pAVPacket->stream_index]->time_base.den,
@@ -773,34 +755,80 @@ void CMyFFmpeg::thread_UnPacket()
 
             if (pAVPacket->stream_index == m_iVideoStream)  //视频Packet
             {
+                //取Duration
+                if(pAVPacket->duration > 0)
+                {
+                    //直接取Duration
+                    iVideoDuration = pAVPacket->duration;
+                }
+                else if(pAVPacket->dts > iVideoDts)
+                {
+                    //if(Duration == 0) 计算两个包的dts间隔做Duration
+                    iVideoDuration = pAVPacket->dts - iVideoDts;
+                    pAVPacket->duration = iVideoDuration;
+                    LOG(Debug, "CMyFFmpeg::thread_UnPacket()---> SET pAVPacket->duration = (dts - iVideoDts) = 0x%X; \n", iVideoDuration);
+                }
+                else
+                {
+                    //视频包间隔默认40ms
+                    iVideoDuration = m_pAVFormatCtx->streams[pAVPacket->stream_index]->time_base.den / m_pAVFormatCtx->streams[pAVPacket->stream_index]->time_base.num / 25;
+                    pAVPacket->duration = iVideoDuration;
+                    LOG(Debug, "CMyFFmpeg::thread_UnPacket()---> SET pAVPacket->duration = (TimeBase/25) = 0x%X; \n", iVideoDuration);
+                }
+
+                //保存dts
+                iVideoDts = pAVPacket->dts;
+
                 //缓存AVPacket
                 m_MutexPacketVideo.lock();  //--加锁
                 m_listPacketVideo.push_back(pAVPacket);
-                iPacketVideo = m_listPacketVideo.size();
+                iVideoPacketCount = m_listPacketVideo.size();
+                m_iVideoListDuration += iVideoDuration;  //累加Duration
+                iVideoDuration = m_iVideoListDuration;   //反哺一下，队列满时计算用。
                 m_MutexPacketVideo.unlock();  //--解锁
-
-                //保存Duration
-                m_iVideoPktDuration = pAVPacket->duration;
 
                 pAVPacket = NULL;
 
-                LOG(Debug, "CMyFFmpeg::thread_UnPacket()---> m_listPacketVideo.push_back(pAVPacket); m_listPacketVideo.size()=%d; \n", iPacketVideo);
+                LOG(Debug, "CMyFFmpeg::thread_UnPacket()---> m_listPacketVideo.push_back(pAVPacket); m_listPacketVideo.size()=%d; m_iVideoListDuration=0x%X;\n", iVideoPacketCount, iVideoDuration);
 
             }
             else if (pAVPacket->stream_index == m_iAudioStream)  //音频Packet
             {
+                //取Duration
+                if(pAVPacket->duration > 0)
+                {
+                    //直接取Duration
+                    iAudioDuration = pAVPacket->duration;
+                }
+                else if(pAVPacket->dts > iAudioDts)
+                {
+                    //(Duration == 0) 计算两个包的dts间隔做Duration
+                    iAudioDuration = pAVPacket->dts - iAudioDts;
+                    pAVPacket->duration = iAudioDuration;
+                    LOG(Debug, "CMyFFmpeg::thread_UnPacket()---> SET pAVPacket->duration = (dts - iAudioDts) = 0x%X; \n", iAudioDuration);
+                }
+                else
+                {
+                    //音频包间隔默认20ms
+                    iAudioDuration = m_pAVFormatCtx->streams[pAVPacket->stream_index]->time_base.den / m_pAVFormatCtx->streams[pAVPacket->stream_index]->time_base.num / 50;
+                    pAVPacket->duration = iAudioDuration;
+                    LOG(Debug, "CMyFFmpeg::thread_UnPacket()---> SET pAVPacket->duration = (TimeBase/50) = 0x%X; \n", iAudioDuration);
+                }
+
+                //保存dts
+                iAudioDts = pAVPacket->dts;
+
                 //缓存AVPacket
                 m_MutexPacketAudio.lock();  //--加锁
                 m_listPacketAudio.push_back(pAVPacket);
-                iPacketAudio = m_listPacketAudio.size();
+                iAudioPacketCount = m_listPacketAudio.size();
+                m_iAudioListDuration += iAudioDuration;  //累加Duration
+                iAudioDuration = m_iAudioListDuration;   //反哺一下，队列满时计算睡眠时间。
                 m_MutexPacketAudio.unlock();  //--解锁
-
-                //保存Duration
-                m_iAudioPktDuration = pAVPacket->duration;
 
                 pAVPacket = NULL;
 
-                LOG(Debug, "CMyFFmpeg::thread_UnPacket()---> m_listPacketAudio.push_back(pAVPacket); m_listPacketAudio.size()=%d; \n", iPacketAudio);
+                LOG(Debug, "CMyFFmpeg::thread_UnPacket()---> m_listPacketAudio.push_back(pAVPacket); m_listPacketAudio.size()=%d; m_iAudioListDuration=0x%X; \n", iAudioPacketCount, iAudioDuration);
             }
             else  //未定义的类型
             {
@@ -880,6 +908,21 @@ void CMyFFmpeg::thread_Video()
     AVPacket *pAVPacket = NULL;
     int iReadState = 0;
     int iSendState = 0;
+
+    //------------------------------------------------
+
+    int64_t iVideoPts = 0;  //视频帧PTS
+    int64_t iAudioPts = 0;  //音频帧PTS
+
+    int64_t iVideoDuration = 0;  //视频帧间隔
+    int64_t iAudioDuration = 0;  //音频帧间隔
+
+    double dVideoDuration = 0;  //视频帧时长=(视频帧间隔*时间基)
+    double dAudioDuration = 0;  //音频帧时长=(音频帧间隔*时间基)
+
+    uint32_t dwVideoDuration = 0;  //快慢调整后的视频帧时长(毫秒)
+
+    //------------------------------------------------
 
     while (!m_bClose)
     {
@@ -970,30 +1013,29 @@ void CMyFFmpeg::thread_Video()
 
            //------------------------------------------------------------------
 
-           //与音频同步
+           //音视频同步
            do
            {
-               //保存旧的视频PTS
-               int64_t iVideoPts = m_iVideoPts;
-
-               //取新时间戳
-               m_iVideoPts = pAVFrame->pts;
-               m_iVideoDts = pAVFrame->pkt_dts;
-               if(m_iVideoDuration != pAVFrame->pkt_duration)
+               //取视频Duration
+               if(iVideoDuration != pAVFrame->pkt_duration)  //避免每次算浮点
                {
-                   m_iVideoDuration = pAVFrame->pkt_duration;
-                   m_dVideoDuration = m_iVideoDuration * m_dVideoTimebase;
-                   m_dwVideoDelay   = (uint32_t)m_dVideoDuration;
+                   iVideoDuration  = pAVFrame->pkt_duration;
+                   dVideoDuration  = iVideoDuration * m_dVideoTimebase;
+                   dwVideoDuration = (uint32_t)dVideoDuration;
 
-                   LOG(Debug, "CMyFFmpeg::thread_Video()---> Update: m_dVideoTimebase[%lf] * m_iVideoDuration[%d] = m_dVideoDuration[%lf]; m_dwVideoDelay=%d; \n", m_dVideoTimebase, m_iVideoDuration, m_dVideoDuration, m_dwVideoDelay);
+                   LOG(Debug, "CMyFFmpeg::thread_Video()---> Update: iVideoDuration[%d] * m_dVideoTimebase[%lf] = dVideoDuration[%lf]; dwVideoDuration=%d; \n", iVideoDuration, m_dVideoTimebase, dVideoDuration, dwVideoDuration);
                }
 
                //视频pts异常，按常速播放。
-               if (iVideoPts >= pAVFrame->pts)
+               if (iVideoPts > pAVFrame->pts)
                {
-                   LOG(Warn, "CMyFFmpeg::thread_Video()---> Video pts abnormal: m_iVideoPts[%d] >= pAVFrame->pts[%d]; \n", iVideoPts, pAVFrame->pts);
+                   LOG(Warn, "CMyFFmpeg::thread_Video()---> Video pts abnormal: m_iVideoPts[%d] > pAVFrame->pts[%d]; \n", iVideoPts, pAVFrame->pts);//取新时间戳
+                   iVideoPts = pAVFrame->pts;  //更新pts，可能是新起点。
                    break;
                }
+
+               //保存视频Pts
+               iVideoPts = pAVFrame->pts;
 
                //---------------------------------------------------------------
 
@@ -1008,71 +1050,68 @@ void CMyFFmpeg::thread_Video()
                    break;
                }
 
-               //保存旧的音频PTS
-               int64_t iAudioPts = m_iAudioPts;
-
-               //取音频时间戳
-               m_iAudioPts = m_pMyAudioOutput->getPTS();
-               m_iAudioDts = m_pMyAudioOutput->getDTS();
-               if(m_iAudioDuration != m_pMyAudioOutput->getDuration())
-               {
-                   m_iAudioDuration = m_pMyAudioOutput->getDuration();
-                   m_dAudioDuration = m_iAudioDuration * m_dAudioTimebase;
-                   m_dwAudioDelay   = (uint32_t)m_dAudioDuration;
-
-                   LOG(Debug, "CMyFFmpeg::thread_Video()---> Update: m_iAudioDuration=%d; m_dAudioDuration=%lf; m_dwAudioDelay=%d; \n", m_iAudioDuration, m_dAudioDuration, m_dwAudioDelay);
-                   //LOG(Debug, "CMyFFmpeg::thread_Video()---> m_iVideoDuration[%d] * m_dVideoTimebase[%lf] = m_dVideoDuration[%lf]; m_dwVideoDelay=%d; \n", m_iVideoDuration, m_dVideoTimebase, m_dVideoDuration, m_dwVideoDelay);
-               }
-
-               if (iAudioPts > m_iAudioPts || m_iAudioPts > 0x7FFFFF00)
+               //取音频Pts
+               int64_t iPts = m_pMyAudioOutput->getPTS();
+               if(iAudioPts > iPts)
                {
                    //音频pts异常，按常速播放。
-                   LOG(Warn, "CMyFFmpeg::thread_Video()---> Audio pts abnormal: m_iAudioPts[%d] > pAVFrame->pts[%d] \n", iAudioPts, m_iAudioPts);
+                   LOG(Warn, "CMyFFmpeg::thread_Video()---> Audio pts abnormal: m_iAudioPts[0x%X] > pAVFrame->pts[0x%p] \n", iAudioPts, iPts);
+                   iAudioPts = iPts;
                    break;
+               }
+
+               //保存音频Pts
+               iAudioPts = iPts;
+
+               //取音频Duration
+               if(iAudioDuration != m_pMyAudioOutput->getDuration())  //避免每次算浮点
+               {
+                   iAudioDuration = m_pMyAudioOutput->getDuration();
+                   dAudioDuration = iAudioDuration * m_dAudioTimebase;
+                   LOG(Debug, "CMyFFmpeg::thread_Video()---> Update: m_pMyAudioOutput->getDuration[%d] * m_dAudioTimebase[%lf] = dAudioDuration[%lf]; \n", iAudioDuration, m_dAudioTimebase, dAudioDuration);
                }
 
                //---------------------------------------------------------------
 
                //换算成实际时间
-               //double dVideoDuration = m_pAVFrame->pkt_duration * m_dVideoTimebase;  //不用每次算浮点
-               double dVideoTime = m_iVideoPts * m_dVideoTimebase;
-               double dAudioTime = m_iAudioPts * m_dAudioTimebase;
+               double dVideoTime = iVideoPts * m_dVideoTimebase;
+               double dAudioTime = iAudioPts * m_dAudioTimebase;
 
                //计算同步时间
-               m_dwVideoDelay = (uint32_t)m_dVideoDuration;
-               if ((dVideoTime + m_dVideoDuration) < dAudioTime)
+               //dwVideoDuration = (uint32_t)dVideoDuration;  //上面已经算过
+               if ((dVideoTime + dVideoDuration) < dAudioTime)
                {
                    //视频慢, 缩短帧间隔
-                   m_dwVideoDelay = (m_dwVideoDelay/2) - 1;
-                   LOG(Debug, "CMyFFmpeg::thread_Video()---> Video slow: (dVideoTime[%lf] + m_dVideoDuration[%lf]) < dAudioTime[%lf]; m_dwVideoDelay = (m_dVideoDuration[%lf]/2 -1) = %d; \n", dVideoTime, m_dVideoDuration, dAudioTime, m_dVideoDuration, m_dwVideoDelay);
+                   dwVideoDuration = (uint32_t)(dVideoDuration * 0.5);  //睡眠时间
+                   LOG(Debug, "CMyFFmpeg::thread_Video()---> Video slow: (dVideoTime[%lf] + dVideoDuration[%lf]) < dAudioTime[%lf]; (dVideoDuration[%lf] * 0.5) = dwVideoDuration[%dms]; \n", dVideoTime, dVideoDuration, dAudioTime, dVideoDuration, dwVideoDuration);
                }
                //else if (0 < dAudioTime && (dAudioTime + m_dAudioDuration) < dVideoTime)
-               else if (0 < dAudioTime && (dAudioTime + m_dAudioDuration) < dVideoTime)
+               else if ((dAudioTime + dAudioDuration) < dVideoTime)
                {
                    //视频快, 增加帧间隔
-                   m_dwVideoDelay = m_dwVideoDelay * 1.5;  //睡眠时间
-                   LOG(Debug, "CMyFFmpeg::thread_Video()---> Video fast: (dAudioTime[%lf] + m_dAudioDuration[%lf]) < dVideoTime[%lf]; m_dwVideoDelay = (m_dVideoDuration[%lf] * 1.5) = %d; \n", dAudioTime, m_dAudioDuration, dVideoTime, m_dVideoDuration, m_dwVideoDelay);
+                   dwVideoDuration = (uint32_t)(dVideoDuration * 1.5);  //睡眠时间
+                   LOG(Debug, "CMyFFmpeg::thread_Video()---> Video fast: (dAudioTime[%lf] + dAudioDuration[%lf]) < dVideoTime[%lf]; (dVideoDuration[%lf] * 1.5) = dwVideoDuration[%dms]; \n", dAudioTime, dAudioDuration, dVideoTime, dVideoDuration, dwVideoDuration);
                }
                else
                {
                    //同步区间内，帧间隔不变。
-                   //m_dVideoDuration = (pAVFrame->pts - m_iVideoPts) * m_dVideoTimebase;
-                   //m_dwVideoDelay = (uint32_t)m_dVideoDuration;
-                   LOG(Debug, "CMyFFmpeg::thread_Video()---> Video normal: dVideoTime[%lf] + m_dVideoDuration[%lf] = dAudioTime[%lf] + m_dAudioDuration[%lf]; m_dwVideoDelay = %d; \n", dVideoTime, m_dVideoDuration, dAudioTime, m_dAudioDuration, m_dwVideoDelay);
+                   dwVideoDuration = (uint32_t)dVideoDuration;
+                   LOG(Debug, "CMyFFmpeg::thread_Video()---> Video normal: (dVideoTime[%lf] + dVideoDuration[%lf]) == (dAudioTime[%lf] + dAudioDuration[%lf]); dwVideoDuration = %dms; \n", dVideoTime, dVideoDuration, dAudioTime, dAudioDuration, dwVideoDuration);
                }
            }
            while(false);
         }
         else
         {
-            LOG(Debug, "CMyFFmpeg::thread_Video()---> avcodec_receive_frame() = %d; \n", iReadState);
+            LOG(Debug, "CMyFFmpeg::thread_Video()---> avcodec_receive_frame() = %d; Set dwVideoDuration = 40ms; \n", iReadState);
+            dwVideoDuration = 40; //40ms
         }
 
         //----------------------------------------------
 
         //投喂解码器
         m_MutexPacketVideo.lock();  //--加锁
-        LOG(Debug, "CMyFFmpeg::thread_Video()---> m_listPacketVideo.size() = %d; \n", m_listPacketVideo.size());
+        LOG(Debug, "CMyFFmpeg::thread_Video()---> m_listPacketVideo.size() = %d; m_iVideoListDuration = 0x%X; \n", m_listPacketVideo.size(), m_iVideoListDuration);
         while(m_listPacketVideo.size() > 0)
         {
             //取包
@@ -1100,6 +1139,7 @@ void CMyFFmpeg::thread_Video()
                 m_listPacketVideo.pop_front();
                 if(pAVPacket)
                 {
+                    m_iVideoListDuration -= pAVPacket->duration;  //累减Duration
                     av_packet_unref(pAVPacket);
                     listPacket.push_back(pAVPacket);
                 }
@@ -1119,20 +1159,23 @@ void CMyFFmpeg::thread_Video()
                 listPacket.pop_front();
             }
             m_MutexPacketBuffer.unlock();  //--解锁
-        }
-        else if(iReadState == AVERROR(EAGAIN))
-        {
-            //读不出Frame，也没Packet喂。
-            m_dwVideoDelay = 40; //40ms
+
+            //解码器输出空
+            if(iReadState == AVERROR(EAGAIN))
+            {
+                //读不出Frame，喂饱Packet后立即读，不睡了...
+                LOG(Debug, "CMyFFmpeg::thread_Video()---> (0 < listPacket.size() && iReadState == AVERROR(EAGAIN)) SET Sleep(dwVideoDuration = 0ms); \n");
+                dwVideoDuration = 0;
+            }
         }
 
         //--------------------------------------------------------------
 
         //睡一会儿
-        if(m_dwVideoDelay > 0)
+        if(dwVideoDuration > 10)
         {
-            LOG(Debug, "CMyFFmpeg::thread_Video()---> Sleep( m_dwVideoDelay = %dms ); \n", m_dwVideoDelay);
-            Sleep(m_dwVideoDelay);
+            LOG(Debug, "CMyFFmpeg::thread_Video()---> Sleep(dwVideoDuration = %dms); \n", dwVideoDuration);
+            Sleep(dwVideoDuration);
         }
     }
 
@@ -1308,16 +1351,16 @@ void CMyFFmpeg::thread_Audio()
                 {
                     //计算睡眠时间
                     int64_t iBufferDuration = m_pMyAudioOutput->getBufferDuration();
-                    int iBufferDelay = (int)((iBufferDuration - m_iAudioDuration) * m_dAudioTimebase * 0.5) - 10;  //少睡10ms
-                    if (iBufferDelay > 10)
+                    int iBufferDelay = (int)(m_dAudioTimebase * iBufferDuration * 0.5);  //睡眠时间打5折，实际值仅有理论值的80%
+                    if (iBufferDelay > 20)
                     {
-                        //LOG(Debug, "CMyFFmpeg::thread_Audio()---> m_pMyAudioOutput->popFree() = NULL; m_pMyAudioOutput->getBufferDuration()=%d; m_iAudioDuration=%d; m_dAudioTimebase[%lf]; Sleep(%dms); \n", iBufferDuration, m_iAudioDuration, m_dAudioTimebase, iBufferDelay);
+                        //LOG(Debug, "CMyFFmpeg::thread_Audio()---> m_pMyAudioOutput->popFree() = NULL; m_pMyAudioOutput->getBufferDuration[%d] * m_dAudioTimebase[%lf] * 0.5 = Sleep(%dms); \n", iBufferDuration, m_dAudioTimebase, iBufferDelay);
                         Sleep(iBufferDelay);
                     }
                     else
                     {
                         iBufferDelay = 20;
-                        LOG(Warn, "CMyFFmpeg::thread_Audio()---> m_pMyAudioOutput->popFree() = NULL; m_pMyAudioOutput->getBufferDuration()=%d; m_iAudioDuration=%d; m_dAudioTimebase[%lf]; Sleep(%dms); \n", iBufferDuration, m_iAudioDuration, m_dAudioTimebase, iBufferDelay);
+                        LOG(Warn, "CMyFFmpeg::thread_Audio()---> m_pMyAudioOutput->popFree() = NULL; m_pMyAudioOutput->getBufferDuration[%d] * m_dAudioTimebase[%lf] * 0.5 = %dms; Sleep(20ms); \n", iBufferDuration, m_dAudioTimebase, iBufferDelay);
                         Sleep(iBufferDelay);
                     }
 
@@ -1359,7 +1402,7 @@ void CMyFFmpeg::thread_Audio()
 
         //投喂解码器
         m_MutexPacketAudio.lock();  //--加锁
-        LOG(Debug, "CMyFFmpeg::thread_Audio()---> m_listPacketAudio.size() = %d; \n", m_listPacketAudio.size());
+        LOG(Debug, "CMyFFmpeg::thread_Audio()---> m_listPacketAudio.size() = %d; m_iAudioListDuration = 0x%X; \n", m_listPacketAudio.size(), m_iAudioListDuration);
         while(m_listPacketAudio.size() > 0)
         {
             //取包
@@ -1369,7 +1412,7 @@ void CMyFFmpeg::thread_Audio()
             iAudioState = avcodec_send_packet(m_pAudioCodecCtx, pAVPacket);
             if(iAudioState == AVERROR_EOF)
             {
-                LOG(Debug, "CMyFFmpeg::thread_Audio()---> avcodec_send_packet() = AVERROR_EOF; \n");
+                LOG(Warn, "CMyFFmpeg::thread_Audio()---> avcodec_send_packet() = AVERROR_EOF; \n");
                 break;
             }
             else if (iAudioState == AVERROR(EAGAIN))
@@ -1386,6 +1429,7 @@ void CMyFFmpeg::thread_Audio()
                 m_listPacketAudio.pop_front();
                 if(pAVPacket)
                 {
+                    m_iAudioListDuration -= pAVPacket->duration;  //累减Duration
                     av_packet_unref(pAVPacket);
                     listPacket.push_back(pAVPacket);
                 }
@@ -1396,35 +1440,18 @@ void CMyFFmpeg::thread_Audio()
         //如果没有数据喂解码器，睡一会儿。。。
         if(listPacket.size() == 0)
         {
-            int iBufferDelay = 0;
-
             //计算睡眠时间
             int64_t iBufferDuration = m_pMyAudioOutput->getBufferDuration();
-            if (iBufferDuration > m_iAudioDuration)
+            int iBufferDelay = (int)(m_dAudioTimebase * iBufferDuration * 0.5);  //睡眠时间打5折，实际值仅有理论值的80%
+            if (iBufferDelay > 20)
             {
-                iBufferDelay = (int)((iBufferDuration - m_iAudioDuration) * m_dAudioTimebase) - 10;  //少睡10ms
-                if(iBufferDelay < 10)
-                {
-                    iBufferDelay = 10;
-                }
-                LOG(Debug, "CMyFFmpeg::thread_Audio()---> listPacket.size() = 0; m_pMyAudioOutput->getBufferDuration()=%d; m_iAudioDuration=%d; m_dAudioTimebase[%lf]; Sleep(%dms); \n", iBufferDuration, m_iAudioDuration, m_dAudioTimebase, iBufferDelay);
-                
-            }
-            else if (m_dwAudioDelay > 0)
-            {
-                iBufferDelay = 10;  //睡10ms
-                LOG(Debug, "CMyFFmpeg::thread_Audio()---> listPacket.size() = 0; m_pMyAudioOutput->getBufferDuration()=%d; m_dwAudioDelay=%d; Sleep(%dms); \n", iBufferDuration, m_dwAudioDelay, iBufferDelay);
+                LOG(Debug, "CMyFFmpeg::thread_Audio()---> listPacket.size() = 0;  m_pMyAudioOutput->getBufferDuration[%d] * m_dAudioTimebase[%lf] * 0.5 = Sleep(%dms); \n", iBufferDuration, m_dAudioTimebase, iBufferDelay);
+                Sleep(iBufferDelay);
             }
             else
             {
-                iBufferDelay = 200;
-                LOG(Debug, "CMyFFmpeg::thread_Audio()---> listPacket.size() = 0; m_pMyAudioOutput->getBufferDuration()=%d; m_dwAudioDelay=%d; Sleep(%dms); \n", iBufferDuration, m_dwAudioDelay, iBufferDelay);
-            }
-
-            //睡一会儿
-            if (iBufferDelay >= 10)
-            {
-                Sleep(iBufferDelay);
+                LOG(Debug, "CMyFFmpeg::thread_Audio()---> listPacket.size() = 0;  m_pMyAudioOutput->getBufferDuration() = %d; Sleep(20ms); \n", iBufferDuration);
+                Sleep(20);
             }
         }
         else
@@ -1442,16 +1469,17 @@ void CMyFFmpeg::thread_Audio()
         }
     }
 
-    //取声音缓存
+    //等等输出设备中缓存的音频数据
     int64_t iBufferDuration = m_pMyAudioOutput->getBufferDuration();
-    if (iBufferDuration > 0)
+    int iBufferDelay = (int)(m_dAudioTimebase * iBufferDuration * 0.8);  //实际值仅有理论值的80%
+    if (iBufferDelay > 10)
     {
-        int iBufferDelay = (int)((iBufferDuration + m_iAudioDuration) * m_dAudioTimebase * 0.5);
-        LOG(Info, "CMyFFmpeg::thread_Audio()---> m_pMyAudioOutput->getBufferDuration()=%d; m_iAudioDuration=%d; m_dAudioTimebase[%lf]; Sleep(%dms); \n", iBufferDuration, m_iAudioDuration, m_dAudioTimebase, iBufferDelay);
-        if (iBufferDelay > 0)
-        {
-            Sleep(iBufferDelay);
-        }
+        LOG(Debug, "CMyFFmpeg::thread_Audio()---> m_pMyAudioOutput->getBufferDuration[%d] * m_dAudioTimebase[%lf] * 0.8 = Sleep(%dms); \n", iBufferDuration, m_dAudioTimebase, iBufferDelay);
+        Sleep(iBufferDelay);
+    }
+    else
+    {
+        LOG(Debug, "CMyFFmpeg::thread_Audio()---> m_pMyAudioOutput->getBufferDuration[%d] * m_dAudioTimebase[%lf] * 0.8 = %dms; \n", iBufferDuration, m_dAudioTimebase, iBufferDelay);
     }
 
     //停止播放
