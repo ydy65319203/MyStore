@@ -255,33 +255,32 @@ void MyOpenGLWidget::updateVideoData(unsigned char *pYUVFrame, int64_t iPts, int
     updateMyWindow();
 
     //上报播放进度
-    if(m_bReportStep)
-    {
-        if((m_iPts+m_iReportInterval) < iPts)
-        {
-            m_iPts = iPts;  //保存Pts
-            int iStep = iPts / m_iReportInterval;
-            LOG(Debug, "MyOpenGLWidget::updateVideoData()---> iPts[%d] / m_iReportInterval[%d] = iStep[%d]; emit signal_updatePlayStep(iStep=%d, m_iReportTotal=%d); \n",
-                       iPts, m_iReportInterval, iStep, iStep, m_iReportTotal);
-            emit sig_updatePlayStep(iStep, m_iReportTotal);
-        }
-    }
-
-    Q_UNUSED(iDuration);
-
 //    if(m_bReportStep)
 //    {
-//        m_iReportDuration += iDuration;
-//        if(m_iReportDuration >= m_iReportInterval)
+//        if((m_iPts+m_iReportInterval) < iPts)
 //        {
-
+//            m_iPts = iPts;  //保存Pts
 //            int iStep = iPts / m_iReportInterval;
 //            LOG(Debug, "MyOpenGLWidget::updateVideoData()---> iPts[%d] / m_iReportInterval[%d] = iStep[%d]; emit signal_updatePlayStep(iStep=%d, m_iReportTotal=%d); \n",
 //                       iPts, m_iReportInterval, iStep, iStep, m_iReportTotal);
 //            emit sig_updatePlayStep(iStep, m_iReportTotal);
-//            m_iReportDuration = 0;
 //        }
 //    }
+
+    //上报播放进度
+    if(m_bReportStep)
+    {
+        m_iReportDuration += iDuration;
+        if(m_iReportDuration >= m_iReportInterval)
+        {
+
+            int iStep = iPts / m_iReportInterval;
+            LOG(Debug, "MyOpenGLWidget::updateVideoData()---> iPts[%d] / m_iReportInterval[%d] = iStep[%d]; emit signal_updatePlayStep(iStep=%d, m_iReportTotal=%d); \n",
+                       iPts, m_iReportInterval, iStep, iStep, m_iReportTotal);
+            emit sig_updatePlayStep(iStep, m_iReportTotal);
+            m_iReportDuration = 0;
+        }
+    }
 }
 
 
