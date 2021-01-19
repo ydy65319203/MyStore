@@ -585,10 +585,20 @@ void CMyFrameControlPanel::openYUVFile(QString &qstrFileName)
         //映射文件到内存
         m_pYUVBuffer = m_pFileYUV->map(0, m_iYUVFileSize);
 
+        //设置图像格式和尺寸
+        LOG(Info, "CMyFrameControlPanel::openYUVFile()---> m_pMyOpenGLWidget->setVideoFormat(AV_PIX_FMT_YUV420P=0, width=%d, height=%d, iVideoStreamDuration=0x%X, m_pYUVBuffer); \n", m_iPixelWidth, m_iPixelHeigth, m_iYUVFileSize);
+        m_pMyOpenGLWidget->setVideoFormat(AV_PIX_FMT_YUV420P, m_iPixelWidth, m_iPixelHeigth, m_iYUVFileSize, m_pYUVBuffer);
+        m_iPlayPos += m_iYUVFrameSize;
+
+        //选择上报设备
+        LOG(Info, "CMyFrameControlPanel::openYUVFile()---> m_pMyOpenGLWidget->setReportFlag(true); \n");
+        m_pMyOpenGLWidget->setReportFlag(true);
+        m_pMyAudioOutput->setReportFlag(false);
+
         //播放第一帧
         //playYUVFrame();
-        m_pMyOpenGLWidget->setYUVTexture(m_pYUVBuffer, m_iPixelWidth, m_iPixelHeigth);
-        m_iPlayPos += m_iYUVFrameSize;
+        //m_pMyOpenGLWidget->setYUVTexture(m_pYUVBuffer, m_iPixelWidth, m_iPixelHeigth);
+        //m_iPlayPos += m_iYUVFrameSize;
 
         //启用Play按钮
         //m_pPushButton_Play->setEnabled(true);
@@ -630,7 +640,10 @@ void CMyFrameControlPanel::playYUVFrame()
         m_iPlayPos = 0;
     }
 
-    m_pMyOpenGLWidget->updateYUVTexture(m_pYUVBuffer + m_iPlayPos);
+    //显示图像
+    LOG(Debug, "CMyFrameControlPanel::playYUVFrame()---> m_pMyVideoOutput->updateVideoData(pAVFrameYUV->data[0]); \n");
+    m_pMyOpenGLWidget->updateVideoData(m_pYUVBuffer + m_iPlayPos, m_iPlayPos, m_iYUVFrameSize); //(pAVFrameYUV->data[0]);
+    //m_pMyOpenGLWidget->updateYUVTexture(m_pYUVBuffer + m_iPlayPos);
     m_iPlayPos += m_iYUVFrameSize;
 }
 
