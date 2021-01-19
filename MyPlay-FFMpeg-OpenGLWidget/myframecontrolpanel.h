@@ -28,7 +28,7 @@ public:
     MyOpenGLWidget* getMyOpenGLWidget();
 
 signals:
-    void sig_setPlayMessage(QString &qstrMessage);
+    void sig_setPlayMessage(QString & qstrMessage);
 
 public slots:
     void OnVideoPlayStep(int iStep, int iVideoReportTotal);

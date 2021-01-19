@@ -18,10 +18,19 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+public slots:
+    void setPlayMessage(QString & qstrMessage);
+
+protected:
+    void timerEvent(QTimerEvent *event) override;
+
 private:
     Ui::MainWindow *ui;
 
     CMyFrameControlPanel *m_pFrameControlPanel;  //播放器控制面板
     CMyWidgetControlPanel *m_pWidgetControlPanel;
+
+    QString m_qstrMessage;
+    int m_iTimerId;
 };
 #endif // MAINWINDOW_H

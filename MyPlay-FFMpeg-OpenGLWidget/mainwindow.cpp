@@ -26,8 +26,11 @@ MainWindow::MainWindow(QWidget *parent)
 //    this->setCentralWidget(m_pWidgetControlPanel->getMyOpenGLWidget());
 //    this->setStatusBar(NULL);  //没有状态栏
 
-    this->setWindowTitle("MyPlay Ver1.0");  //标题栏显示文件路径
-    connect(m_pFrameControlPanel, &CMyFrameControlPanel::sig_setPlayMessage, this, &MainWindow::setWindowTitle);
+    //标题栏显示文件路径
+    connect(m_pFrameControlPanel, &CMyFrameControlPanel::sig_setPlayMessage, this, &MainWindow::setPlayMessage);
+    m_qstrMessage = "MyPlay Ver1.0  65319203@qq.com";
+    this->setWindowTitle(m_qstrMessage);
+    m_iTimerId = this->startTimer(500);
 }
 
 MainWindow::~MainWindow()
@@ -38,5 +41,24 @@ MainWindow::~MainWindow()
 //    }
 
     delete ui;
+}
+
+void MainWindow::setPlayMessage(QString &qstrMessage)
+{
+    if(m_iTimerId > 0)
+    {
+        this->killTimer(m_iTimerId);
+        m_iTimerId = 0;
+    }
+
+    this->setWindowTitle(qstrMessage);
+}
+
+void MainWindow::timerEvent(QTimerEvent *event)
+{
+    if (event->timerId() == m_iTimerId)
+    {
+        this->setWindowTitle(m_qstrMessage);
+    }
 }
 
