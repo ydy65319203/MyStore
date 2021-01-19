@@ -316,18 +316,14 @@ void CMyFrameControlPanel::OnButton_OpenFile()
     LOG(Info, "CMyFrameControlPanel::OnButton_OpenFile()... \n");
 
     //取文件名  D:\YDY\SourceCode\MyFFmpeg\MyFilm
-    m_qstrImageFile = QFileDialog::getOpenFileName(this, QStringLiteral("选择纹理图片"), "D:\\YDY\\SourceCode\\MyFFmpeg\\MyFilm");
-    if (m_qstrImageFile.isEmpty())
+    m_qstrFilePath = QFileDialog::getOpenFileName(this, QStringLiteral("选择纹理图片"), "D:\\YDY\\SourceCode\\MyFFmpeg\\MyFilm");
+    if (m_qstrFilePath.isEmpty())
     {
         LOG(Info, "CMyFrameControlPanel::OnButton_OpenFile()---> QFileDialog::getOpenFileName() = NULL; return; \n");
         return;
     }
 
-    std::string sstrImageFile = m_qstrImageFile.toStdString();
-    LOG(Info, "CMyFrameControlPanel::OnButton_OpenFile()---> QFileDialog::getOpenFileName() = %s \n", sstrImageFile.c_str());
-
-    //显示文件名
-    m_pLineEdit_FilePath->setText(m_qstrImageFile);
+    LOG(Info, "CMyFrameControlPanel::OnButton_OpenFile()---> QFileDialog::getOpenFileName() = %s \n", m_qstrFilePath.toStdString().c_str());
 
     //杀定时器
     if(m_iYUVTimerId > 0)
@@ -357,33 +353,43 @@ void CMyFrameControlPanel::OnButton_OpenFile()
     //更新视频状态
     if (m_iVideoPlayState != enClose)
     {
-        LOG(Info, "CMyFrameControlPanel::OnButton_Play()---> OnVideoPlayState(enClose=%d); \n", enClose);
+        LOG(Info, "CMyFrameControlPanel::OnButton_OpenFile()---> OnVideoPlayState(enClose=%d); \n", enClose);
         this->OnVideoPlayState(enClose);
     }
 
     //更新音频状态
     if (m_iAudioPlayState != enClose)
     {
-        LOG(Info, "CMyFrameControlPanel::OnButton_Play()---> OnAudioPlayState(enClose=%d); \n", enClose);
+        LOG(Info, "CMyFrameControlPanel::OnButton_OpenFile()---> OnAudioPlayState(enClose=%d); \n", enClose);
         this->OnAudioPlayState(enClose);
     }
 
     //--------------------------------------------------
+    //提取文件名
+    QFileInfo fileInfo(m_qstrFilePath);
+    m_qstrFileName = fileInfo.fileName();
+    m_pLineEdit_FilePath->setText(m_qstrFileName);  //显示文件名
 
     //检查文件大小
-    QFileInfo fileInfo(m_qstrImageFile);
     m_iYUVFileSize = fileInfo.size();
     qint64 iYUVFileSize = 1024 * 1024 * 1024;
     iYUVFileSize = iYUVFileSize * 4;
     if (m_iYUVFileSize > iYUVFileSize)
     {
-        LOG(Warn, "CMyFrameControlPanel::OnButton_OpenFile()---> The file is too big! m_iFileSize = %d; \n", m_iYUVFileSize);
+        LOG(Warn, "CMyFrameControlPanel::OnButton_OpenFile()---> The file is too big! m_iFileSize[%d] > 4GB; emit sig_setPlayMessage(m_qstrMessage);\n", m_iYUVFileSize);
+        m_qstrMessage = m_qstrFilePath + "  --- The file is too big!";
+        emit sig_setPlayMessage(m_qstrMessage);
         return;
     }
 
+    //上报文件路径，显示在标题栏。
+    LOG(Info, "CMyFrameControlPanel::OnButton_OpenFile()---> emit sig_setPlayMessage(m_qstrFilePath); \n");
+    m_qstrMessage = m_qstrFilePath;
+    emit sig_setPlayMessage(m_qstrMessage);
+
     //检查文件扩展名
     m_qstrFileSuffix = fileInfo.suffix().toLower();
-    if (m_imageTexture.load(m_qstrImageFile))  //if (m_qstrFileSuffix == "png" || m_qstrFileSuffix == "jpg")
+    if (m_imageTexture.load(m_qstrFilePath))  //if (m_qstrFileSuffix == "png" || m_qstrFileSuffix == "jpg")
     {
         //更新纹理
         LOG(Info, "CMyFrameControlPanel::OnButton_OpenFile()---> m_pMyOpenGLWidget->setImageTexture(m_imageTexture); \n");
@@ -393,17 +399,18 @@ void CMyFrameControlPanel::OnButton_OpenFile()
     {
         //YUV视频
         LOG(Info, "CMyFrameControlPanel::OnButton_OpenFile()---> openYUVFile(); \n");
-        openYUVFile(m_qstrImageFile);
+        openYUVFile(m_qstrFilePath);
     }
     else if(m_pMyFFmpeg)
     {
-        //LOG(Info, "CMyFrameControlPanel::selectImageFile()---> Unknown type: %s \n", fileInfo.fileName().toStdString().c_str());
+        //LOG(Info, "CMyFrameControlPanel::OnButton_OpenFile()---> Unknown type: %s \n", m_qstrFileName.toStdString().c_str());
         LOG(Info, "CMyFrameControlPanel::OnButton_OpenFile()---> m_myFFmpeg.openAVFile(); \n");
-        m_pMyFFmpeg->openAVFile(sstrImageFile);
+        std::string sstrFilePath = m_qstrFilePath.toStdString().c_str();
+        m_pMyFFmpeg->openAVFile(sstrFilePath);
     }
     else
     {
-        LOG(Warn, "CMyFrameControlPanel::OnButton_OpenFile()---> Open file fail: %s \n", sstrImageFile.c_str());
+        LOG(Warn, "CMyFrameControlPanel::OnButton_OpenFile()---> Open file fail: %s \n", m_qstrFilePath.toStdString().c_str());
     }
 
     //LOG(Info, "CMyFrameControlPanel::OnButton_OpenFile() End \n");
@@ -412,7 +419,6 @@ void CMyFrameControlPanel::OnButton_OpenFile()
 void CMyFrameControlPanel::OnButton_Play()
 {
     LOG(Info, "CMyFrameControlPanel::OnButton_Play()... \n");
-
     LOG(Info, "CMyFrameControlPanel::OnButton_Play()---> m_iVideoPlayState=%d; m_iAudioPlayState=%d; \n", m_iVideoPlayState, m_iAudioPlayState);
 
     if (m_iVideoPlayState == enPause || m_iAudioPlayState == enPause)

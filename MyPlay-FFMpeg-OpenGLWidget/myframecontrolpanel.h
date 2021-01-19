@@ -27,6 +27,9 @@ public:
     ~CMyFrameControlPanel();
     MyOpenGLWidget* getMyOpenGLWidget();
 
+signals:
+    void sig_setPlayMessage(QString &qstrMessage);
+
 public slots:
     void OnVideoPlayStep(int iStep, int iVideoReportTotal);
     void OnAudioPlayStep(int iStep, int iAudioReportTotal);
@@ -90,8 +93,10 @@ private:
 
     //-----------------------------
 
-    QString m_qstrImageFile;
+    QString m_qstrFilePath;    //文件全路径名
+    QString m_qstrFileName;    //文件全名(带扩展名)
     QString m_qstrFileSuffix;  //文件名后缀 .yuv
+    QString m_qstrMessage;     //外发提示消息
 
     qint64 m_iYUVFrameSize;
     qint64 m_iYUVFileSize;

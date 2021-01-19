@@ -25,6 +25,9 @@ MainWindow::MainWindow(QWidget *parent)
 //    m_pWidgetControlPanel = new CMyWidgetControlPanel;
 //    this->setCentralWidget(m_pWidgetControlPanel->getMyOpenGLWidget());
 //    this->setStatusBar(NULL);  //没有状态栏
+
+    this->setWindowTitle("MyPlay Ver1.0");  //标题栏显示文件路径
+    connect(m_pFrameControlPanel, &CMyFrameControlPanel::sig_setPlayMessage, this, &MainWindow::setWindowTitle);
 }
 
 MainWindow::~MainWindow()
