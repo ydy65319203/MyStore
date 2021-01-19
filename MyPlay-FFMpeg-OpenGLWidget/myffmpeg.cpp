@@ -130,18 +130,18 @@ void CMyFFmpeg::Pause()
 
     if (m_bPause)
     {
-        if (m_pMyVideoOutput)
-        {
-            LOG(Info, "CMyFFmpeg::Pause()---> m_pMyVideoOutput->updatePlayState(enPause=%d); \n", enPause);
-            m_pMyVideoOutput->updatePlayState(enPause);
-        }
-        else if (m_pMyAudioOutput)
-        {
-            LOG(Info, "CMyFFmpeg::Pause()---> m_pMyAudioOutput->updatePlayState(enPause=%d); \n", enPause);
-            m_pMyAudioOutput->updatePlayState(enPause);
-        }
+//        if (m_pMyVideoOutput)
+//        {
+//            LOG(Info, "CMyFFmpeg::Pause()---> m_pMyVideoOutput->updatePlayState(enPause=%d); \n", enPause);
+//            m_pMyVideoOutput->updatePlayState(enPause);
+//        }
+//        else if (m_pMyAudioOutput)
+//        {
+//            LOG(Info, "CMyFFmpeg::Pause()---> m_pMyAudioOutput->updatePlayState(enPause=%d); \n", enPause);
+//            m_pMyAudioOutput->updatePlayState(enPause);
+//        }
 
-        if (m_pMyAudioOutput)
+        if (m_pMyAudioOutput && m_iAudioStream >= 0)
         {
             LOG(Info, "CMyFFmpeg::Pause()---> m_pMyAudioOutput->pauseAudioOutput(); \n");
             m_pMyAudioOutput->pauseAudioOutput();
@@ -149,18 +149,18 @@ void CMyFFmpeg::Pause()
     }
     else
     {
-        if (m_pMyVideoOutput)
-        {
-            LOG(Info, "CMyFFmpeg::Pause()---> m_pMyVideoOutput->updatePlayState(enPlay=%d); \n", enPlay);
-            m_pMyVideoOutput->updatePlayState(enPlay);
-        }
-        else if (m_pMyAudioOutput)
-        {
-            LOG(Info, "CMyFFmpeg::Pause()---> m_pMyAudioOutput->updatePlayState(enPlay=%d); \n", enPlay);
-            m_pMyAudioOutput->updatePlayState(enPlay);
-        }
+//        if (m_pMyVideoOutput)
+//        {
+//            LOG(Info, "CMyFFmpeg::Pause()---> m_pMyVideoOutput->updatePlayState(enPlay=%d); \n", enPlay);
+//            m_pMyVideoOutput->updatePlayState(enPlay);
+//        }
+//        else if (m_pMyAudioOutput)
+//        {
+//            LOG(Info, "CMyFFmpeg::Pause()---> m_pMyAudioOutput->updatePlayState(enPlay=%d); \n", enPlay);
+//            m_pMyAudioOutput->updatePlayState(enPlay);
+//        }
 
-        if (m_pMyAudioOutput)
+        if (m_pMyAudioOutput && m_iAudioStream >= 0)
         {
             LOG(Info, "CMyFFmpeg::Pause()---> m_pMyAudioOutput->pauseAudioOutput(); \n");
             m_pMyAudioOutput->pauseAudioOutput();

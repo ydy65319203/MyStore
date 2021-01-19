@@ -424,8 +424,19 @@ void CMyFrameControlPanel::OnButton_Play()
     if (m_iVideoPlayState == enPause || m_iAudioPlayState == enPause)
     {
         //取消暂停
-        LOG(Info, "CMyFrameControlPanel::OnButton_Play()---> m_pMyFFmpeg->Pause(); \n");
-        m_pMyFFmpeg->Pause();
+        if (m_qstrFileSuffix == "yuv")
+        {
+            //启动定时器
+            LOG(Info, "CMyFrameControlPanel::OnButton_Play()---> startTimer(40) = %d; \n", m_iYUVTimerId);
+            m_iYUVTimerId = this->startTimer(40);  //Qt::PreciseTimer精度计时
+        }
+        else if (m_pMyFFmpeg)
+        {
+            LOG(Info, "CMyFrameControlPanel::OnButton_Play()---> m_pMyFFmpeg->Pause(); \n");
+            m_pMyFFmpeg->Pause();
+        }
+
+        //------------------------------------------------------------------------------------
 
         //更新视频状态
         if (m_iVideoPlayState == enPause)
@@ -443,8 +454,18 @@ void CMyFrameControlPanel::OnButton_Play()
     }
     else if (m_iVideoPlayState == enPlay || m_iAudioPlayState == enPlay)
     {
-        LOG(Info, "CMyFrameControlPanel::OnButton_Play()---> m_pMyFFmpeg->Pause(); \n");
-        m_pMyFFmpeg->Pause();
+        if (m_qstrFileSuffix == "yuv")
+        {
+            //杀定时器
+            LOG(Info, "CMyFrameControlPanel::OnButton_Play()---> killTimer(m_iYUVTimerId=%d) \n", m_iYUVTimerId);
+            this->killTimer(m_iYUVTimerId);
+            m_iYUVTimerId = 0;
+        }
+        else if (m_pMyFFmpeg)
+        {
+            LOG(Info, "CMyFrameControlPanel::OnButton_Play()---> m_pMyFFmpeg->Pause(); \n");
+            m_pMyFFmpeg->Pause();
+        }
 
         //更新视频状态
         if (m_iVideoPlayState == enPlay)
