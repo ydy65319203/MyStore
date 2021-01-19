@@ -57,6 +57,9 @@ private:
     struct SwsContext *m_pImageConvertCtx;
     struct SwrContext *m_pAudioConvertCtx;
 
+    double m_dVideoTimebase;  //视频时间基(浮点数)
+    double m_dAudioTimebase;
+
     //------------------------------------
 
     std::list<AVPacket*> m_listPacketBuffer;
@@ -67,11 +70,11 @@ private:
     std::mutex m_MutexPacketVideo;
     std::mutex m_MutexPacketAudio;
 
-    int64_t m_iVideoListDuration;  //视频链表总间隔
-    int64_t m_iAudioListDuration;  //音频链表总间隔
+    int64_t m_iVideoListDuration;  //视频Packet链表时长(pts)
+    int64_t m_iAudioListDuration;  //音频Packet链表时长(pts)
 
-    double m_dVideoTimebase;  //视频时间基
-    double m_dAudioTimebase;
+    int64_t m_iVideoStreamDuration;  //视频流时长(pts)
+    int64_t m_iAudioStreamDuration;  //音频流时长(pts)
 
     //------------------------------------------------
 

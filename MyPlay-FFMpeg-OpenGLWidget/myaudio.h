@@ -71,13 +71,12 @@ public:
     void updatePlayState(int iState);  //更新播放状态
 
     void setReportFlag(bool bReport);  //设置上报标志
-    void setAudioStreamDuration(int iNum, int iDen, int64_t iAudioStreamDuration);
+    //void setAudioStreamDuration(int iNum, int iDen, int64_t iAudioStreamDuration);
 
-    int setAudioFormat(int iChannel, int iSampleRate, int iSampleFormat);
+    int setAudioFormat(int iChannel, int iSampleRate, int iSampleFormat, int64_t iAudioStreamDuration);
     //int setFrameBuffer(CMyFrameBuffer *pMyFrameBuffer);
     //int setFrameBuffer(int iFrameData, int iFrameCount);
     int setVolume(int iValue);
-    int state();
 
     qint64 writeData(const char *data, qint64 len) override;
     qint64 readData(char *data, qint64 maxlen) override;

@@ -10,8 +10,8 @@ int main(int argc, char *argv[])
     LOG(Info, "main()... \n");
     QApplication app(argc, argv);
 
-    LOG(Info, "main()---> CMyLog::instance()->setLogLevel(Info); \n");
-    CMyLog::instance()->setLogLevel(Info);
+    //LOG(Info, "main()---> CMyLog::instance()->setLogLevel(Info); \n");
+    //CMyLog::instance()->setLogLevel(Info);
 
     QFileInfo fileInfo(argv[0]);
     QString qstrFilePath = fileInfo.absolutePath() + ("/stylesheet.qss");

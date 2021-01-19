@@ -27,18 +27,23 @@ class CMyFrameControlPanel;
 
 enum TextureType
 {
-    enImageTexture = 0,
+    enImageTextureCreate=0,
+    enImageTextureUpdate,
+    enImageTextureShow,
+
+    enYUVTextureCreate,
+    enYUVTextureUpdate,
+    enYUVTextureShow,
+
     enRGBATexture,
     enRGBTexture,
-    enYUVTexture,
 };
 
 enum GraphicsType
 {
     enRectangle = 0,  //矩形
-    enRectRing,       //矩形环
+    enRectRing,       //梯形环
     enSphere,         //球体
-    enSquare,         //正方形
     enCube,           //立方体
     enPlane,
 };
@@ -77,7 +82,7 @@ public:
     void setYUVTexture(unsigned char *pYUVFrame, int iWidth, int iHeight);
     void updateYUVTexture(unsigned char *pYUVFrame);
 
-    void setVideoFormat(int iPixelFormat, int iWidth, int iHeight);  //AVPixelFormat: AV_PIX_FMT_YUV420P=0; AV_PIX_FMT_RGB24=2;
+    void setVideoFormat(int iPixelFormat, int iWidth, int iHeight, int64_t iVideoStreamDuration, unsigned char *pData);  //AVPixelFormat: AV_PIX_FMT_YUV420P=0; AV_PIX_FMT_RGB24=2;
     void updateVideoData(unsigned char *pYUVFrame, int64_t iPts, int64_t iDuration);
     void updatePlayState(int iState);  //更新播放状态
 
@@ -85,9 +90,11 @@ public:
     void setVideoStreamDuration(int iNum, int iDen, int64_t iVideoStreamDuration);
 
 public slots:
+    void OnSetVideoFormat(int iPixelFormat, int iWidth, int iHeight, unsigned char *pData);
     void OnUpdateMyWindow();
 
 signals:
+    void sig_setVideoFormat(int iPixelFormat, int iWidth, int iHeight, unsigned char *pData);  //用于内部同步纹理格式
     void sig_updatePlayStep(int iStep, int iReportTotal);  //向上层报告播放进度
     void sig_updatePlayState(int iState);  //向上层应用报告状态
     void sig_updateMyWindow();  //用于内部update();
@@ -135,6 +142,7 @@ private:
     int m_iReportTotal;
     int m_iReportInterval;  //根据时间基计算上报间隔
     int64_t m_iReportDuration;
+    int64_t m_iPts;
 
     int m_iVertexCount;
     int m_iVertexCount_Plane;
@@ -153,8 +161,8 @@ private:
     QOpenGLShaderProgram *m_pShaderProgramYUV;
 
     QImage m_imageTexture;
-    bool m_bUpdateTexture;
-    bool m_bUpdateTextureYUV;
+    //bool m_bUpdateTexture;
+    //bool m_bUpdateTextureYUV;
 
     unsigned char *m_pYUVFrame;  //一帧YUV数据
     int m_iYFrameSize;  //Y分量的像素数量

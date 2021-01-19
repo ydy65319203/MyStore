@@ -27,7 +27,7 @@ MyOpenGLWidget::MyOpenGLWidget(QWidget *pParent)
     m_iVertexRectRing = 0;
     m_iIndexRectRing  = 0;
 
-    m_enTextureType = enImageTexture;
+    m_enTextureType = enImageTextureCreate;  //默认笑脸符
     m_enGraphicsType = enPlane;
     //m_enGraphicsType = enRectRing;  //矩形环
     //m_enGraphicsType = enCube;    //立方体
@@ -42,8 +42,8 @@ MyOpenGLWidget::MyOpenGLWidget(QWidget *pParent)
     m_pShaderProgram = NULL;
     m_pShaderProgramYUV = NULL;
 
-    m_bUpdateTexture = false;
-    m_bUpdateTextureYUV = false;
+    //m_bUpdateTexture = false;
+    //m_bUpdateTextureYUV = false;
 
     m_pYUVFrame = NULL;
     m_iYFrameSize = 0;
@@ -55,6 +55,7 @@ MyOpenGLWidget::MyOpenGLWidget(QWidget *pParent)
     m_fAngleY = 0.0f;
     m_fAngleZ = 0.0f;
 
+    connect(this, &MyOpenGLWidget::sig_setVideoFormat, this, &MyOpenGLWidget::OnSetVideoFormat);
     connect(this, &MyOpenGLWidget::sig_updateMyWindow, this, &MyOpenGLWidget::OnUpdateMyWindow);
 
     //追踪鼠标事件
@@ -150,15 +151,15 @@ void MyOpenGLWidget::rotateZ(float fAngle)
 
 void MyOpenGLWidget::setImageTexture(QImage &imageTexture)
 {
-    m_enTextureType = enImageTexture;  //设置纹理类型
-    m_imageTexture = imageTexture;     //传入QImage对象
-    m_bUpdateTexture = true;
+    m_enTextureType = enImageTextureCreate;  //设置纹理类型
+    m_imageTexture = imageTexture;           //传入QImage对象
+    //m_bUpdateTexture = true;
 }
 
 void MyOpenGLWidget::setYUVTexture(unsigned char *pYUVFrame, int iWidth, int iHeight)
 {
-    m_enTextureType = enYUVTexture;    //设置纹理类型
-    m_bUpdateTextureYUV = true;
+    m_enTextureType = enYUVTextureCreate;    //设置纹理类型
+    //m_bUpdateTextureYUV = true;
     m_pYUVFrame = pYUVFrame;
     m_iHeight = iHeight;
     m_iWidth = iWidth;
@@ -171,7 +172,7 @@ void MyOpenGLWidget::setYUVTexture(unsigned char *pYUVFrame, int iWidth, int iHe
 
 void MyOpenGLWidget::updateYUVTexture(unsigned char *pYUVFrame)
 {
-    m_bUpdateTextureYUV = true;
+    m_enTextureType = enYUVTextureUpdate;
     m_pYUVFrame = pYUVFrame;
     update();
 }
@@ -223,20 +224,31 @@ void MyOpenGLWidget::setVideoStreamDuration(int iNum, int iDen, int64_t iVideoSt
 }
 
 //AVPixelFormat: AV_PIX_FMT_YUV420P=0; AV_PIX_FMT_RGB24=2;
-void MyOpenGLWidget::setVideoFormat(int iPixelFormat, int iWidth, int iHeight)
+void MyOpenGLWidget::setVideoFormat(int iPixelFormat, int iWidth, int iHeight, int64_t iVideoStreamDuration, unsigned char *pData)
 {
-    if(iPixelFormat == AV_PIX_FMT_YUV420P)
+    //计算播放进度条间隔
+    if(iVideoStreamDuration >= 1024)
     {
-        //this->resize(iWidth, iHeight);
-        m_iHeight = iHeight;
-        m_iWidth  = iWidth;
+        //m_iReportTotal = 1024;
+        m_iReportInterval = (iVideoStreamDuration / 1024);
+        m_iReportTotal = (iVideoStreamDuration / m_iReportInterval) + 1;
     }
+    else //if(iVideoStreamDuration < 1024)
+    {
+        m_iReportTotal = iVideoStreamDuration;
+        m_iReportInterval = 1;
+    }
+
+    LOG(Info, "MyOpenGLWidget::setVideoFormat()---> iVideoStreamDuration=0x%X, m_iReportTotal=%d, m_iReportInterval=%d; \n", iVideoStreamDuration, m_iReportTotal, m_iReportInterval);
+
+    LOG(Info, "MyOpenGLWidget::setVideoFormat()---> emit sig_setVideoFormat(iPixelFormat, iWidth, iHeight, pData); \n");
+    emit sig_setVideoFormat(iPixelFormat, iWidth, iHeight, pData);
 }
 
 void MyOpenGLWidget::updateVideoData(unsigned char *pYUVFrame, int64_t iPts, int64_t iDuration)
 {
-    m_enTextureType = enYUVTexture;    //设置纹理类型
-    m_bUpdateTextureYUV = true;
+    m_enTextureType = enYUVTextureUpdate;    //设置纹理类型
+    //m_bUpdateTextureYUV = true;
     m_pYUVFrame = pYUVFrame;
     
     //刷新窗口
@@ -245,17 +257,31 @@ void MyOpenGLWidget::updateVideoData(unsigned char *pYUVFrame, int64_t iPts, int
     //上报播放进度
     if(m_bReportStep)
     {
-        m_iReportDuration += iDuration;
-        if(m_iReportDuration >= m_iReportInterval)
+        if((m_iPts+m_iReportInterval) < iPts)
         {
-
+            m_iPts = iPts;  //保存Pts
             int iStep = iPts / m_iReportInterval;
             LOG(Debug, "MyOpenGLWidget::updateVideoData()---> iPts[%d] / m_iReportInterval[%d] = iStep[%d]; emit signal_updatePlayStep(iStep=%d, m_iReportTotal=%d); \n",
                        iPts, m_iReportInterval, iStep, iStep, m_iReportTotal);
             emit sig_updatePlayStep(iStep, m_iReportTotal);
-            m_iReportDuration = 0;
         }
     }
+
+    Q_UNUSED(iDuration);
+
+//    if(m_bReportStep)
+//    {
+//        m_iReportDuration += iDuration;
+//        if(m_iReportDuration >= m_iReportInterval)
+//        {
+
+//            int iStep = iPts / m_iReportInterval;
+//            LOG(Debug, "MyOpenGLWidget::updateVideoData()---> iPts[%d] / m_iReportInterval[%d] = iStep[%d]; emit signal_updatePlayStep(iStep=%d, m_iReportTotal=%d); \n",
+//                       iPts, m_iReportInterval, iStep, iStep, m_iReportTotal);
+//            emit sig_updatePlayStep(iStep, m_iReportTotal);
+//            m_iReportDuration = 0;
+//        }
+//    }
 }
 
 
@@ -302,15 +328,6 @@ void MyOpenGLWidget::enterEvent(QEvent *event)
         //LOG(Debug, "MyOpenGLWidget::leaveEvent()---> m_pFrameControlPanel->show(); \n");
         ((QFrame*)m_pFrameControlPanel)->show();
         m_bControlPanel = true;
-
-//        m_bControlPanel =((QFrame*)m_pFrameControlPanel)->isVisible();
-//        m_rectControlPanel = ((QFrame*)m_pFrameControlPanel)->frameGeometry();
-//        LOG(Debug, "MyOpenGLWidget::enterEvent()---> m_pFrameControlPanel->frameGeometry(); rect.x=%d, y=%d, width=%d, height=%d; bVisible=%d; \n",
-//                   m_rectControlPanel.x(),
-//                   m_rectControlPanel.y(),
-//                   m_rectControlPanel.width(),
-//                   m_rectControlPanel.height(),
-//                   m_bControlPanel);
     }
 
     Q_UNUSED(event);
@@ -336,6 +353,22 @@ void MyOpenGLWidget::OnUpdateMyWindow()
 {
     //LOG(Info, "MyOpenGLWidget::OnUpdateMyWindow()---> update(); \n");
     update();
+}
+
+void MyOpenGLWidget::OnSetVideoFormat(int iPixelFormat, int iWidth, int iHeight, unsigned char *pData)
+{
+    LOG(Info, "MyOpenGLWidget::OnSetVideoFormat(AV_PIX_FMT_YUV420P=0, width=%d, height=%d, pAVFrameYUV->data[0]=%p)... \n", iWidth, iHeight, pData);
+
+    if(iPixelFormat == AV_PIX_FMT_YUV420P)
+    {
+        m_enTextureType = enYUVTextureCreate;    //设置纹理类型
+        m_pYUVFrame = pData;
+        m_iHeight = iHeight;
+        m_iWidth = iWidth;
+
+        //m_iYFrameSize = m_iHeight * m_iWidth;  //计算Y分量的帧尺寸
+        //m_iUFrameSize = m_iYFrameSize / 4;     //YUV420P格式: YUV=4:1:1
+    }
 }
 
 //槽函数
@@ -366,6 +399,15 @@ void MyOpenGLWidget::initializeGL()
     initVertexPlane();
     initVertexRectRing();
     //initTexture();
+
+    if(m_imageTexture.load(":/picture/background-boxboy.jpg"))
+    {
+        LOG(Info, "MyOpenGLWidget::initializeGL()---> m_imageTexture.load(:/picture/background-boxboy.jpg) Succ. \n");
+    }
+    else
+    {
+        LOG(Warn, "MyOpenGLWidget::initializeGL()---> m_imageTexture.load(:/picture/background-boxboy.jpg) Fail. \n");
+    }
 
 //    QOpenGLBuffer *pPBO = new QOpenGLBuffer(QOpenGLBuffer::PixelPackBuffer);
 //    pPBO->create();
@@ -413,12 +455,12 @@ void MyOpenGLWidget::paintGL()
     }
 
     //释放着色器纹理
-    if(m_enTextureType == enImageTexture)
+    if(m_enTextureType == enImageTextureShow)
     {
         m_pShaderProgram->release();
         m_pTexture->release();
     }
-    else if(m_enTextureType == enYUVTexture)
+    else if(m_enTextureType == enYUVTextureShow)
     {
         m_pShaderProgramYUV->release();
     }
@@ -652,8 +694,8 @@ void MyOpenGLWidget::initTexture()
     if(m_imageTexture.load(":/smileface.png"))
     {
         m_pTexture = new QOpenGLTexture(m_imageTexture.mirrored());
-        m_enTextureType = enImageTexture;
-        m_bUpdateTexture  = false;
+        m_enTextureType = enImageTextureCreate;
+        //m_bUpdateTexture  = false;
     }
 
 //    m_pTextureY = new QOpenGLTexture(QOpenGLTexture::Target2D);
@@ -672,41 +714,41 @@ void MyOpenGLWidget::initTexture()
 //选择着色器
 void MyOpenGLWidget::paintGL_TextureProgram()
 {
-    if(m_enTextureType == enImageTexture)  //图片纹理
+    if(m_enTextureType == enImageTextureCreate || m_enTextureType == enImageTextureUpdate)  //创建图片纹理
     {
-        //创建Image纹理
-        if(m_pTexture == NULL) //(m_bCreatedTexture == false && m_bUpdateTexture == true)
+        LOG(Info, "MyOpenGLWidget::paintGL_TextureProgram()---> m_enTextureType=%d; Create image Texture. \n", m_enTextureType);
+
+        //更新纹理状态
+        m_enTextureType = enImageTextureShow;
+
+        //销毁纹理对象
+        if(m_pTexture)
         {
-            if(m_bUpdateTexture)
-            {
-                LOG(Info, "MyOpenGLWidget::paintGL_TextureProgram()---> Create image Texture. \n");
-                m_pTexture = new QOpenGLTexture(m_imageTexture);
-                m_bUpdateTexture  = false;
-            }
-            else if(m_imageTexture.load(":/picture/background-boxboy.jpg"))
-            {
-                LOG(Info, "MyOpenGLWidget::paintGL_TextureProgram()---> Create default image Texture. \n");
-                m_pTexture = new QOpenGLTexture(m_imageTexture);
-                m_bUpdateTexture  = false;
-            }
+            m_pTexture->destroy();
+            delete m_pTexture;
+            m_pTexture = NULL;
         }
+
+        //创建纹理对象
+        m_pTexture = new QOpenGLTexture(m_imageTexture);
+
+        //绑定纹理对象
+        m_pTexture->bind(0);  //0---30 可改
+
+        //绑定着色器
+        if(m_pShaderProgram)
+        {
+            m_pShaderProgram->bind();
+            m_pShaderProgram->setUniformValue("texSampler2D", 0);  //--对应绑定的纹理对象
+            m_pShaderProgram->setUniformValue("mat4MVP", m_Matrix4MVP);
+        }
+    }
+    else if(m_enTextureType == enImageTextureShow)
+    {
+        //LOG(Debug, "MyOpenGLWidget::paintGL_TextureProgram()---> m_enTextureType=%d; Show image Texture. \n", m_enTextureType);
 
         if(m_pTexture)
         {
-            //更新Image纹理
-            if(m_bUpdateTexture)
-            {
-                LOG(Info, "MyOpenGLWidget::paintGL_TextureProgram()---> Modify image Texture. \n");
-
-                //销毁
-                m_pTexture->destroy();
-                delete m_pTexture;
-
-                //重建
-                m_pTexture = new QOpenGLTexture(m_imageTexture);
-                m_bUpdateTexture  = false;
-            }
-
             //绑定纹理对象
             m_pTexture->bind(0);  //0---30 可改
 
@@ -719,87 +761,163 @@ void MyOpenGLWidget::paintGL_TextureProgram()
             }
         }
     }
-    else if(m_enTextureType == enYUVTexture)  //YUV纹理
+    else if(m_enTextureType == enYUVTextureCreate)  //创建YUV纹理
     {
-        //创建YUV纹理
+        LOG(Info, "MyOpenGLWidget::paintGL_TextureProgram()---> m_enTextureType=%d; Create YUV Texture. \n", m_enTextureType);
+
+        //更新纹理状态
+        m_enTextureType = enYUVTextureShow;
+
+        m_iYFrameSize = m_iHeight * m_iWidth;  //计算Y分量的帧尺寸
+        m_iUFrameSize = m_iYFrameSize / 4;     //YUV420P格式: YUV=4:1:1
+
+        //创建纹理对象
         if(m_uTextureId[1] == 0 && m_uTextureId[2] == 0 && m_pYUVFrame)
         {
-            m_iYFrameSize = m_iHeight * m_iWidth;  //计算Y分量的帧尺寸
-            m_iUFrameSize = m_iYFrameSize / 4;     //YUV420P格式: YUV=4:1:1
-
-            LOG(Info, "MyOpenGLWidget::paintGL_TextureProgram()---> Create YUV Texture. \n");
-            m_bUpdateTextureYUV = false;
             glGenTextures(3, m_uTextureId);
             LOG(Info, "MyOpenGLWidget::paintGL_TextureProgram()---> m_uTextureId[0]=%u, m_uTextureId[1]=%u, m_uTextureId[2]=%u; \n", m_uTextureId[0], m_uTextureId[1], m_uTextureId[2]);
-
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, m_uTextureId[0]);  // 为当前绑定的纹理对象设置环绕、过滤方式
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);       // 环绕方式x方向 重复  //GL_CLAMP_TO_EDGE //GL_CLAMP_TO_BORDER
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);       // y 方向重复
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);   // 纹理缩小时的过滤方式 线性
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);   // 纹理放大时的过滤方式 线性 or GL_NEAREST 相邻
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, m_iWidth, m_iHeight, 0, GL_RED,GL_UNSIGNED_BYTE, m_pYUVFrame);
-
-            //qDebug("MyOpenGLWidget::paintCube()---> glActiveTexture(GL_TEXTURE1);");
-            glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, m_uTextureId[1]);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, m_iWidth/2, m_iHeight/2, 0, GL_RED,GL_UNSIGNED_BYTE, &m_pYUVFrame[m_iYFrameSize]);
-
-            //qDebug("MyOpenGLWidget::paintCube()---> glActiveTexture(GL_TEXTURE2);");
-            glActiveTexture(GL_TEXTURE2);
-            glBindTexture(GL_TEXTURE_2D, m_uTextureId[2]);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, m_iWidth/2, m_iHeight/2, 0, GL_RED,GL_UNSIGNED_BYTE, &m_pYUVFrame[m_iYFrameSize + m_iUFrameSize]);
         }
-        else if(m_bUpdateTextureYUV)  //更新YUV纹理
-        {
-            //qDebug("MyOpenGLWidget::paintCube()---> Update YUV Texture.");
 
-            m_bUpdateTextureYUV = false;
+        //更新纹理数据
+        LOG(Info, "MyOpenGLWidget::paintGL_TextureProgram()---> glTexImage2D(); m_iWidth=%d, m_iHeight=%d; m_iYFrameSize=%d, m_iUFrameSize=%d; \n", m_iWidth, m_iHeight, m_iYFrameSize, m_iUFrameSize);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, m_uTextureId[0]);  // 为当前绑定的纹理对象设置环绕、过滤方式
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);       // 环绕方式x方向 重复  //GL_CLAMP_TO_EDGE //GL_CLAMP_TO_BORDER
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);       // y 方向重复
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);   // 纹理缩小时的过滤方式 线性
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);   // 纹理放大时的过滤方式 线性 or GL_NEAREST 相邻
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, m_iWidth, m_iHeight, 0, GL_RED,GL_UNSIGNED_BYTE, m_pYUVFrame);
 
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, m_uTextureId[0]);
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_iWidth, m_iHeight, GL_RED,GL_UNSIGNED_BYTE, m_pYUVFrame);
+        //qDebug("MyOpenGLWidget::paintGL_TextureProgram()---> glActiveTexture(GL_TEXTURE1);");
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, m_uTextureId[1]);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, m_iWidth/2, m_iHeight/2, 0, GL_RED,GL_UNSIGNED_BYTE, &m_pYUVFrame[m_iYFrameSize]);
 
-            glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, m_uTextureId[1]);
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_iWidth/2, m_iHeight/2, GL_RED,GL_UNSIGNED_BYTE, &m_pYUVFrame[m_iYFrameSize]);
+        //qDebug("MyOpenGLWidget::paintGL_TextureProgram()---> glActiveTexture(GL_TEXTURE2);");
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, m_uTextureId[2]);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, m_iWidth/2, m_iHeight/2, 0, GL_RED,GL_UNSIGNED_BYTE, &m_pYUVFrame[m_iYFrameSize + m_iUFrameSize]);
+    }
+    else if(m_enTextureType == enYUVTextureUpdate)  //更新YUV纹理
+    {
+        //LOG(Debug, "MyOpenGLWidget::paintGL_TextureProgram()---> m_enTextureType=%d; Update YUV Texture. \n", m_enTextureType);
 
-            glActiveTexture(GL_TEXTURE2);
-            glBindTexture(GL_TEXTURE_2D, m_uTextureId[2]);
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_iWidth/2, m_iHeight/2, GL_RED,GL_UNSIGNED_BYTE, &m_pYUVFrame[m_iYFrameSize + m_iUFrameSize]);
-        }
-        else  //绑定纹理
-        {
-            //qDebug("MyOpenGLWidget::paintCube()---> repaint YUV Texture.");
+        //更新纹理状态
+        m_enTextureType = enYUVTextureShow;
 
-            glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, m_uTextureId[0]);
+        //更新纹理数据
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, m_uTextureId[0]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, m_iWidth, m_iHeight, 0, GL_RED,GL_UNSIGNED_BYTE, m_pYUVFrame);
+        //glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_iWidth, m_iHeight, GL_RED,GL_UNSIGNED_BYTE, m_pYUVFrame);
 
-            glActiveTexture(GL_TEXTURE1);
-            glBindTexture(GL_TEXTURE_2D, m_uTextureId[1]);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, m_uTextureId[1]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, m_iWidth/2, m_iHeight/2, 0, GL_RED,GL_UNSIGNED_BYTE, &m_pYUVFrame[m_iYFrameSize]);
+        //glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_iWidth/2, m_iHeight/2, GL_RED,GL_UNSIGNED_BYTE, &m_pYUVFrame[m_iYFrameSize]);
 
-            glActiveTexture(GL_TEXTURE2);
-            glBindTexture(GL_TEXTURE_2D, m_uTextureId[2]);
-        }
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, m_uTextureId[2]);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, m_iWidth/2, m_iHeight/2, 0, GL_RED,GL_UNSIGNED_BYTE, &m_pYUVFrame[m_iYFrameSize + m_iUFrameSize]);
+        //glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_iWidth/2, m_iHeight/2, GL_RED,GL_UNSIGNED_BYTE, &m_pYUVFrame[m_iYFrameSize + m_iUFrameSize]);
+    }
+    else if(m_enTextureType == enYUVTextureShow)  //显示YUV纹理
+    {
+        //LOG(Debug, "MyOpenGLWidget::paintGL_TextureProgram()---> m_enTextureType=%d; Show YUV Texture. \n", m_enTextureType);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, m_uTextureId[0]);
+
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, m_uTextureId[1]);
+
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, m_uTextureId[2]);
+    }
+    else
+    {
+        LOG(Warn, "MyOpenGLWidget::paintGL_TextureProgram()---> Undefine m_enTextureType=%d; \n", m_enTextureType);
+    }
+
+//    else if(m_enTextureType == enYUVTexture)  //YUV纹理
+//    {
+//        //创建YUV纹理
+//        if(m_uTextureId[1] == 0 && m_uTextureId[2] == 0 && m_pYUVFrame)
+//        {
+//            m_iYFrameSize = m_iHeight * m_iWidth;  //计算Y分量的帧尺寸
+//            m_iUFrameSize = m_iYFrameSize / 4;     //YUV420P格式: YUV=4:1:1
+
+//            LOG(Info, "MyOpenGLWidget::paintGL_TextureProgram()---> Create YUV Texture. m_iWidth=%d, m_iHeight=%d; m_iYFrameSize=%d, m_iUFrameSize=%d; \n", m_iWidth, m_iHeight, m_iYFrameSize, m_iUFrameSize);
+//            m_bUpdateTextureYUV = false;
+//            glGenTextures(3, m_uTextureId);
+//            LOG(Info, "MyOpenGLWidget::paintGL_TextureProgram()---> m_uTextureId[0]=%u, m_uTextureId[1]=%u, m_uTextureId[2]=%u; \n", m_uTextureId[0], m_uTextureId[1], m_uTextureId[2]);
+
+
+//        }
+//        else if(m_bUpdateTextureYUV)  //更新YUV纹理
+//        {
+//            m_iYFrameSize = m_iHeight * m_iWidth;  //计算Y分量的帧尺寸
+//            m_iUFrameSize = m_iYFrameSize / 4;     //YUV420P格式: YUV=4:1:1
+
+//            LOG(Debug, "MyOpenGLWidget::paintGL_TextureProgram()---> m_bUpdateTextureYUV = true; m_iWidth=%d, m_iHeight=%d; m_iYFrameSize=%d, m_iUFrameSize=%d; \n", m_iWidth, m_iHeight, m_iYFrameSize, m_iUFrameSize);
+
+//            m_bUpdateTextureYUV = false;
+
+//            glActiveTexture(GL_TEXTURE0);
+//            glBindTexture(GL_TEXTURE_2D, m_uTextureId[0]);
+//            glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, m_iWidth, m_iHeight, 0, GL_RED,GL_UNSIGNED_BYTE, m_pYUVFrame);
+//            //glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_iWidth, m_iHeight, GL_RED,GL_UNSIGNED_BYTE, m_pYUVFrame);
+
+//            glActiveTexture(GL_TEXTURE1);
+//            glBindTexture(GL_TEXTURE_2D, m_uTextureId[1]);
+//            glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, m_iWidth/2, m_iHeight/2, 0, GL_RED,GL_UNSIGNED_BYTE, &m_pYUVFrame[m_iYFrameSize]);
+//            //glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_iWidth/2, m_iHeight/2, GL_RED,GL_UNSIGNED_BYTE, &m_pYUVFrame[m_iYFrameSize]);
+
+//            glActiveTexture(GL_TEXTURE2);
+//            glBindTexture(GL_TEXTURE_2D, m_uTextureId[2]);
+//            glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, m_iWidth/2, m_iHeight/2, 0, GL_RED,GL_UNSIGNED_BYTE, &m_pYUVFrame[m_iYFrameSize + m_iUFrameSize]);
+//            //glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_iWidth/2, m_iHeight/2, GL_RED,GL_UNSIGNED_BYTE, &m_pYUVFrame[m_iYFrameSize + m_iUFrameSize]);
+//        }
+//        else  //绑定纹理
+//        {
+//            //qDebug("MyOpenGLWidget::paintGL_TextureProgram()---> repaint YUV Texture.");
+
+//            glActiveTexture(GL_TEXTURE0);
+//            glBindTexture(GL_TEXTURE_2D, m_uTextureId[0]);
+
+//            glActiveTexture(GL_TEXTURE1);
+//            glBindTexture(GL_TEXTURE_2D, m_uTextureId[1]);
+
+//            glActiveTexture(GL_TEXTURE2);
+//            glBindTexture(GL_TEXTURE_2D, m_uTextureId[2]);
+//        }
 
         //绑定着色器
-        if(m_pShaderProgramYUV)
+        if(enYUVTextureShow == m_enTextureType && m_pShaderProgramYUV)
         {
             m_pShaderProgramYUV->bind();
-            m_pShaderProgramYUV->setUniformValue("texSampler2D_Y", 0);
-            m_pShaderProgramYUV->setUniformValue("texSampler2D_U", 1);
-            m_pShaderProgramYUV->setUniformValue("texSampler2D_V", 2);
+            m_pShaderProgramYUV->setUniformValue("texSampler2D_Y", 0);  //GL_TEXTURE0
+            m_pShaderProgramYUV->setUniformValue("texSampler2D_U", 1);  //GL_TEXTURE1
+            m_pShaderProgramYUV->setUniformValue("texSampler2D_V", 2);  //GL_TEXTURE2
             m_pShaderProgramYUV->setUniformValue("mat4MVP", m_Matrix4MVP);
         }
-    }
+        else if(enImageTextureShow == m_enTextureType && m_pShaderProgram)
+        {
+            m_pShaderProgram->bind();
+            m_pShaderProgram->setUniformValue("texSampler2D", 0);  //--对应绑定的纹理对象
+            m_pShaderProgram->setUniformValue("mat4MVP", m_Matrix4MVP);
+        }
+        else
+        {
+            LOG(Warn, "MyOpenGLWidget::paintGL_TextureProgram()---> Bind Shader fail! \n");
+        }
 }
 
 void MyOpenGLWidget::drawGraphics()
@@ -838,10 +956,9 @@ void MyOpenGLWidget::drawCube()
 
     if(m_pTexture)
     {
-        if(m_bUpdateTexture)
+        if(m_enTextureType == enImageTextureUpdate)
         {
             m_pTexture->setData(m_imageTexture);
-            m_bUpdateTexture = false;
         }
 
         m_pTexture->bind(0);

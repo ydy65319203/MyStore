@@ -538,7 +538,7 @@ void CMyFrameControlPanel::openYUVFile(QString &qstrFileName)
 
     //计算帧尺寸YUV420Plane
     m_iYUVFrameSize = m_iPixelWidth * m_iPixelHeigth * 1.5;
-    LOG(Info, "CMyFrameControlPanel::openYUVFile()---> m_iYUVFileSize=%d; m_iYUVFrameSize=%d, m_iPixelWidth=%d, m_iPixelHeigth=%d; ", m_iYUVFileSize, m_iYUVFrameSize, m_iPixelWidth, m_iPixelHeigth);
+    LOG(Info, "CMyFrameControlPanel::openYUVFile()---> m_iYUVFileSize=%d; m_iYUVFrameSize=%d, m_iPixelWidth=%d, m_iPixelHeigth=%d; \n", m_iYUVFileSize, m_iYUVFrameSize, m_iPixelWidth, m_iPixelHeigth);
 
     //关闭旧文件
     if(m_pYUVBuffer && m_pFileYUV)
@@ -620,7 +620,7 @@ void CMyFrameControlPanel::startAudio()
 
     //设置音频播放格式
     //LOG(Info, "CMyFrameControlPanel::startAudio()---> m_pMyAudioOutput->setAudioFormat(iChannel=2, iSampleRate=%d, iSampleFormat=%d); \n", pAVFrame->sample_rate, pAVFrame->format);
-    iRet = m_pMyAudioOutput->setAudioFormat(2, 44100, 0);
+    iRet = m_pMyAudioOutput->setAudioFormat(2, 44100, 0, 1024);  //临时用1024
     if (iRet < 0)
     {
         LOG(Error, "CMyFrameControlPanel::startAudio()---> m_pMyAudioOutput->setAudioFormat() = %d; break; \n", iRet);
