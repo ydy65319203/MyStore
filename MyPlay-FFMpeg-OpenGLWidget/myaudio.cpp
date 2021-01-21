@@ -274,31 +274,60 @@ CMyAudioOutput::~CMyAudioOutput()
 
 void CMyAudioOutput::startAudioOutput()
 {
-    LOG(Info, "CMyAudioOutput::startAudioOutput()---> emit signal_startAudioOutput(); \n");
+    LOG(Debug, "CMyAudioOutput::startAudioOutput()---> emit signal_startAudioOutput(); \n");
     emit signal_startAudioOutput();
 }
 
 void CMyAudioOutput::pauseAudioOutput()
 {
-    LOG(Info, "CMyAudioOutput::pauseAudioOutput()---> emit signal_pauseAudioOutput(); \n");
+    LOG(Debug, "CMyAudioOutput::pauseAudioOutput()---> emit signal_pauseAudioOutput(); \n");
     emit signal_pauseAudioOutput();
 }
 
 void CMyAudioOutput::stopAudioOutput()
 {
-    LOG(Info, "CMyAudioOutput::stopAudioOutput()---> emit signal_stopAudioOutput(); \n");
+    LOG(Debug, "CMyAudioOutput::stopAudioOutput()---> emit signal_stopAudioOutput(); \n");
     emit signal_stopAudioOutput();
 }
 
-void CMyAudioOutput::updatePlayState(int iState)
+//设置音量
+void CMyAudioOutput::setVolume(int iValue)
 {
-    LOG(Info, "CMyAudioOutput::updatePlayState()---> emit sig_updatePlayState(iState=%d); \n", iState);
-    emit signal_updatePlayState(iState);
+    //LOG(Debug, "CMyAudioOutput::setVolume( iValue=%d )... \n", iValue);
+
+    if(iValue == m_iVolume)
+    {
+        return;
+    }
+
+    qreal linearVolume = QAudio::convertVolume(iValue / qreal(100),
+                                               QAudio::LogarithmicVolumeScale,
+                                               QAudio::LinearVolumeScale);
+    if(m_pAudioOutput)
+    {
+        LOG(Debug, "CMyAudioOutput::setVolume( iValue = %d )---> m_pAudioOutput->setVolume( linearVolume = %lf ); \n", iValue, linearVolume);
+        m_pAudioOutput->setVolume(linearVolume);
+        m_iVolume = iValue;
+    }
+
+    return;
 }
 
 void CMyAudioOutput::setReportFlag(bool bReport)
 {
     m_bReportStep = bReport;
+}
+
+//更新播放状态
+void CMyAudioOutput::updatePlayState(int iState, std::string & sstrMessage)
+{
+    LOG(Debug, "CMyAudioOutput::updatePlayState(iState=%d, sstrMessage=%s)... \n", iState, sstrMessage.c_str());
+
+    if(m_bReportStep)
+    {
+        LOG(Debug, "CMyAudioOutput::updatePlayState()---> emit signal_updatePlayState(iState=%d, sstrMessage); \n", iState);
+        emit signal_updatePlayState(iState, sstrMessage.c_str());
+    }
 }
 
 //void CMyAudioOutput::setAudioStreamDuration(int iNum, int iDen, int64_t iAudioStreamDuration)
@@ -421,27 +450,6 @@ int CMyAudioOutput::setAudioFormat(int iChannel, int iSampleRate, int iSampleFor
 //    return true;
 //}
 
-int CMyAudioOutput::setVolume(int iValue)
-{
-    //LOG(Debug, "CMyAudioOutput::setVolume( iValue=%d )... \n", iValue);
-
-    if(iValue == m_iVolume)
-    {
-        return iValue;
-    }
-
-    qreal linearVolume = QAudio::convertVolume(iValue / qreal(100),
-                                               QAudio::LogarithmicVolumeScale,
-                                               QAudio::LinearVolumeScale);
-    if(m_pAudioOutput)
-    {
-        LOG(Debug, "CMyAudioOutput::setVolume( iValue = %d )---> m_pAudioOutput->setVolume( linearVolume = %lf ); \n", iValue, linearVolume);
-        m_pAudioOutput->setVolume(linearVolume);
-        m_iVolume = iValue;
-    }
-
-    return m_iVolume;
-}
 
 void CMyAudioOutput::OnStartAudioOutput()
 {
@@ -471,14 +479,20 @@ void CMyAudioOutput::OnStartAudioOutput()
 
     //-----------------------------------------------------------------
 
-    //打开设备
+    //打开IO设备
     if(!QIODevice::open(QIODevice::ReadOnly))
     {
         LOG(Error, "CMyAudioOutput::OnStartAudioOutput()---> QIODevice::open(QIODevice::ReadOnly) = false; \n");
         return;
     }
 
-    //创建播放器
+    if(m_pAudioOutput)
+    {
+        delete m_pAudioOutput;
+        m_pAudioOutput = NULL;
+    }
+
+    //创建音频输出设备
     m_pAudioOutput = new QAudioOutput(m_audioFormat);
     if(m_pAudioOutput == NULL)
     {

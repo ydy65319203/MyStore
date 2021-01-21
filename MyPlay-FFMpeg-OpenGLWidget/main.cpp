@@ -30,6 +30,9 @@ int main(int argc, char *argv[])
         LOG(Warn, "main()---> qssFile.open(QFile::ReadOnly) = false; \n");
     }
 
+    //使用std::string做信号参数，需要注册模版类。  //qmake对模版类的支持有限。
+    //qRegisterMetaType<std::string>();
+
     LOG(Info, "main()---> MainWindow.show; \n");
     MainWindow w;
     //CMyWidget w;

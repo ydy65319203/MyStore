@@ -42,8 +42,8 @@ CMyFFmpeg::CMyFFmpeg()
     m_iAudioStream = -1;
     m_iSubTitleStream = -1;
 
-    m_bPause = false;
-    m_bClose = false;
+    m_bPause = true;
+    m_bClose = true;
 }
 
 CMyFFmpeg::~CMyFFmpeg()
@@ -74,7 +74,7 @@ void CMyFFmpeg::openAVFile(string &sstrAVFilePath)
     }
 
     m_sstrAVFilePath = sstrAVFilePath;
-    m_bClose = true;
+    m_bClose = false;
     m_bPause = false;
 
     LOG(Info, "CMyFFmpeg::openAVFile()---> std::thread(&CMyFFmpeg::thread_OpenAVFile, this); \n");
@@ -128,27 +128,46 @@ void CMyFFmpeg::Pause()
     LOG(Info, "CMyFFmpeg::Pause()... \n");
     m_bPause = !m_bPause;
 
-    if (m_bPause)
+    if (m_pMyAudioOutput && m_iAudioStream >= 0)
     {
-//        if (m_pMyVideoOutput)
-//        {
-//            LOG(Info, "CMyFFmpeg::Pause()---> m_pMyVideoOutput->updatePlayState(enPause=%d); \n", enPause);
-//            m_pMyVideoOutput->updatePlayState(enPause);
-//        }
-//        else if (m_pMyAudioOutput)
-//        {
-//            LOG(Info, "CMyFFmpeg::Pause()---> m_pMyAudioOutput->updatePlayState(enPause=%d); \n", enPause);
-//            m_pMyAudioOutput->updatePlayState(enPause);
-//        }
+        LOG(Info, "CMyFFmpeg::Pause()---> m_pMyAudioOutput->pauseAudioOutput(); \n");
+        m_pMyAudioOutput->pauseAudioOutput();  //暂停或恢复播放声音
 
-        if (m_pMyAudioOutput && m_iAudioStream >= 0)
-        {
-            LOG(Info, "CMyFFmpeg::Pause()---> m_pMyAudioOutput->pauseAudioOutput(); \n");
-            m_pMyAudioOutput->pauseAudioOutput();
-        }
+        m_sstrMessage = "";
+        LOG(Debug, "CMyFFmpeg::Pause()---> m_pMyAudioOutput->updatePlayState(enPause[%d], m_sstrMessage); \n", enPause);
+        m_pMyAudioOutput->updatePlayState(enPause, m_sstrMessage);  //上报状态
+    }
+    else if(m_pMyVideoOutput && m_iVideoStream >= 0)
+    {
+        m_sstrMessage = "";
+        LOG(Debug, "CMyFFmpeg::Pause()---> m_pMyVideoOutput->updatePlayState(enPause[%d], m_sstrMessage); \n", enPause);
+        m_pMyVideoOutput->updatePlayState(enPause, m_sstrMessage);  //上报状态
     }
     else
     {
+        LOG(Warn, "CMyFFmpeg::Pause()---> m_iVideoStream=%d, m_iAudioStream=%d; \n", m_iVideoStream, m_iAudioStream);
+    }
+
+//    if (m_bPause)
+//    {
+//        if (m_pMyAudioOutput && m_iAudioStream >= 0)
+//        {
+//            LOG(Info, "CMyFFmpeg::Pause()---> m_pMyAudioOutput->pauseAudioOutput(); \n");
+//            m_pMyAudioOutput->pauseAudioOutput();  //暂停声音
+
+//            m_sstrMessage = "";
+//            LOG(Info, "CMyFFmpeg::Pause()---> m_pMyAudioOutput->updatePlayState(enPause[%d], m_sstrMessage); \n", enPause);
+//            m_pMyAudioOutput->updatePlayState(enPause, m_sstrMessage);  //上报状态
+//        }
+//        else if(m_pMyVideoOutput)
+//        {
+//            m_sstrMessage = "";
+//            LOG(Info, "CMyFFmpeg::Pause()---> m_pMyVideoOutput->updatePlayState(enPause[%d], m_sstrMessage); \n", enPause);
+//            m_pMyVideoOutput->updatePlayState(enPause, m_sstrMessage);  //上报状态
+//        }
+//    }
+//    else
+//    {
 //        if (m_pMyVideoOutput)
 //        {
 //            LOG(Info, "CMyFFmpeg::Pause()---> m_pMyVideoOutput->updatePlayState(enPlay=%d); \n", enPlay);
@@ -160,12 +179,22 @@ void CMyFFmpeg::Pause()
 //            m_pMyAudioOutput->updatePlayState(enPlay);
 //        }
 
-        if (m_pMyAudioOutput && m_iAudioStream >= 0)
-        {
-            LOG(Info, "CMyFFmpeg::Pause()---> m_pMyAudioOutput->pauseAudioOutput(); \n");
-            m_pMyAudioOutput->pauseAudioOutput();
-        }
-    }
+//        if (m_pMyAudioOutput && m_iAudioStream >= 0)
+//        {
+//            LOG(Info, "CMyFFmpeg::Pause()---> m_pMyAudioOutput->pauseAudioOutput(); \n");
+//            m_pMyAudioOutput->pauseAudioOutput();
+//        }
+    //    }
+}
+
+bool CMyFFmpeg::bClose()
+{
+    return m_bClose;
+}
+
+bool CMyFFmpeg::bPause()
+{
+    return m_bPause;
 }
 
 void CMyFFmpeg::closeAVFile()
@@ -292,6 +321,9 @@ void CMyFFmpeg::closeAVFile()
     m_iVideoStream = -1;
     m_iAudioStream = -1;
     m_iSubTitleStream = -1;
+
+    m_bClose = true;
+    m_bPause = true;
 }
 
 void CMyFFmpeg::thread_OpenAVFile()
@@ -305,7 +337,13 @@ void CMyFFmpeg::thread_OpenAVFile()
     m_pAVFormatCtx = avformat_alloc_context();
     if (m_pAVFormatCtx == NULL)
     {
-        LOG(Error, "CMyFFmpeg::thread_OpenAVFile()---> avformat_alloc_context() = NULL; \n");
+        LOG(Error, "CMyFFmpeg::thread_OpenAVFile()---> avformat_alloc_context() = NULL; m_pMyVideoOutput->setReportFlag(true); \n");
+        m_pMyVideoOutput->setReportFlag(true);
+
+        m_sstrMessage_threadOpenAVFile = "avformat_alloc_context() Fail";
+        LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> m_pMyVideoOutput->updatePlayState(enOpenFail[%d], m_sstrMessage_threadOpenAVFile); \n", enOpenFail);
+        m_pMyVideoOutput->updatePlayState(enOpenFail, m_sstrMessage_threadOpenAVFile);  //上报状态
+
         return;
     }
 
@@ -322,7 +360,13 @@ void CMyFFmpeg::thread_OpenAVFile()
     int iRet = avformat_open_input(&m_pAVFormatCtx, m_sstrAVFilePath.c_str(), NULL, NULL);
     if (iRet < 0)
     {
-        LOG(Error, "CMyFFmpeg::thread_OpenAVFile()---> avformat_open_input() Fail; \n");
+        LOG(Error, "CMyFFmpeg::thread_OpenAVFile()---> avformat_open_input() Fail; m_pMyVideoOutput->setReportFlag(true); \n");
+        m_pMyVideoOutput->setReportFlag(true);
+
+        m_sstrMessage_threadOpenAVFile = "avformat_open_input() Fail";
+        LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> m_pMyVideoOutput->updatePlayState(enOpenFail[%d], m_sstrMessage_threadOpenAVFile); \n", enOpenFail);
+        m_pMyVideoOutput->updatePlayState(enOpenFail, m_sstrMessage_threadOpenAVFile);  //上报状态
+
         return;
     }
 
@@ -331,7 +375,14 @@ void CMyFFmpeg::thread_OpenAVFile()
     iRet = avformat_find_stream_info(m_pAVFormatCtx, NULL);
     if (iRet < 0)
     {
-        LOG(Error, "CMyFFmpeg::thread_OpenAVFile()---> avformat_find_stream_info() Fail; \n");
+        LOG(Error, "CMyFFmpeg::thread_OpenAVFile()---> avformat_find_stream_info() Fail; m_pMyVideoOutput->setReportFlag(true); \n");
+
+        m_pMyVideoOutput->setReportFlag(true);
+
+        m_sstrMessage_threadOpenAVFile = "avformat_find_stream_info() Fail";
+        LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> m_pMyVideoOutput->updatePlayState(enOpenFail[%d], m_sstrMessage_threadOpenAVFile); \n", enOpenFail);
+        m_pMyVideoOutput->updatePlayState(enOpenFail, m_sstrMessage_threadOpenAVFile);  //上报状态
+
         return;
     }
 
@@ -486,8 +537,8 @@ void CMyFFmpeg::thread_OpenAVFile()
                 //m_pMyVideoOutput->setVideoStreamDuration(pStream->time_base.num, pStream->time_base.den, m_iVideoStreamDuration);
 
                 //Enable播放按钮
-                LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> m_pMyVideoOutput->updatePlayState(enOpen=%d); \n", enOpen);
-                m_pMyVideoOutput->updatePlayState(enOpen);
+                //LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> m_pMyVideoOutput->updatePlayState(enOpen=%d); \n", enOpenSucc);
+                //m_pMyVideoOutput->updatePlayState(enOpenSucc);
             }
             else
             {
@@ -532,8 +583,8 @@ void CMyFFmpeg::thread_OpenAVFile()
                 //m_pMyAudioOutput->setAudioStreamDuration(pStream->time_base.num, pStream->time_base.den, iAudioStreamDuration);
 
                 //上报播放状态
-                LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> m_pMyAudioOutput->updatePlayState(enOpen=%d); \n", enOpen);
-                m_pMyAudioOutput->updatePlayState(enOpen);
+                //LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> m_pMyAudioOutput->updatePlayState(enOpen=%d); \n", enOpenSucc);
+                //m_pMyAudioOutput->updatePlayState(enOpenSucc);
             }
             else
             {
@@ -552,7 +603,7 @@ void CMyFFmpeg::thread_OpenAVFile()
         }
         else
         {
-            LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> pCodecPar->codec_type = %d; Unkonw ! \n", pCodecPar->codec_type);
+            LOG(Warn, "CMyFFmpeg::thread_OpenAVFile()---> pCodecPar->codec_type = %d; Unkonw ! \n", pCodecPar->codec_type);
             LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> avcodec_free_context(&pCodecCtx); \n");
             avcodec_free_context(&pCodecCtx);
         }
@@ -566,22 +617,38 @@ void CMyFFmpeg::thread_OpenAVFile()
         LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> m_pMyAudioOutput->setReportFlag(true); \n");
         m_pMyVideoOutput->setReportFlag(false);
         m_pMyAudioOutput->setReportFlag(true);
+
+        m_sstrMessage_threadOpenAVFile = "";
+        LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> m_pMyAudioOutput->updatePlayState(enOpenSucc[%d], m_sstrMessage_threadOpenAVFile); \n", enOpenSucc);
+        m_pMyAudioOutput->updatePlayState(enOpenSucc, m_sstrMessage_threadOpenAVFile);
     }
     else if(m_iVideoStream >= 0)
     {
         LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> m_pMyVideoOutput->setReportFlag(true); \n");
         m_pMyVideoOutput->setReportFlag(true);
         m_pMyAudioOutput->setReportFlag(false);
+
+        m_sstrMessage_threadOpenAVFile = "";
+        LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> m_pMyVideoOutput->updatePlayState(enOpenSucc[%d], m_sstrMessage_threadOpenAVFile); \n", enOpenSucc);
+        m_pMyVideoOutput->updatePlayState(enOpenSucc, m_sstrMessage_threadOpenAVFile);
     }
     else
     {
-        LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> (m_pMyVideoOutput and m_pMyAudioOutput)->setReportFlag(false); \n");
-        m_pMyVideoOutput->setReportFlag(false);
-        m_pMyAudioOutput->setReportFlag(false);
+        LOG(Warn, "CMyFFmpeg::thread_OpenAVFile()---> m_iVideoStream=%d, m_iAudioStream=%d; m_pMyVideoOutput->setReportFlag(true); \n", m_iVideoStream, m_iAudioStream);
+        m_pMyVideoOutput->setReportFlag(true);
+
+        m_sstrMessage_threadOpenAVFile = "No audio or video stream found.";
+        LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> m_pMyVideoOutput->updatePlayState(enOpenFail[%d], m_sstrMessage_threadOpenAVFile); \n\n", enOpenFail);
+        m_pMyVideoOutput->updatePlayState(enOpenFail, m_sstrMessage_threadOpenAVFile);  //上报状态
+
+        return;
     }
 
     //-----------------------------------------------------------------
     //LOG(Info, "CMyFFmpeg::thread_OpenAVFile() End \n");
+
+    LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> Play(); \n");
+    this->Play();
 }
 
 
@@ -635,28 +702,33 @@ void CMyFFmpeg::thread_UnPacket()
                 LOG(Debug, "CMyFFmpeg::thread_UnPacket()---> SET (m_dVideoTimebase[%lf] * m_iVideoListDuration[%d] * 0.5) = iVideoFullDelay[%d]; \n", m_dVideoTimebase, iVideoDuration, iVideoFullDelay);
             }
 
-            //计算音频队列时长
-            int iAudioDelay = (m_dAudioTimebase * iAudioDuration * 0.5);
-            if (iAudioDelay < iVideoFullDelay)
+            //先取视频时长 (可能没有音频流)
+            iDelay = iVideoFullDelay;
+            if(m_iAudioStream >= 0)
             {
-                iDelay = iAudioDelay;
+                //计算音频队列时长
+                int iAudioDelay = (m_dAudioTimebase * iAudioDuration * 0.5);
+                if (iAudioDelay < iVideoFullDelay)
+                {
+                    iDelay = iAudioDelay;
+                }
+
+                LOG(Debug, "CMyFFmpeg::thread_UnPacket()---> iVideoDelay[%d]=%dms; iAudioDelay[%d]=%dms; Sleep(%dms); \n", iVideoPacketCount, iVideoFullDelay, iAudioPacketCount, iAudioDelay, iDelay);
             }
             else
             {
-                iDelay = iVideoFullDelay;
+                LOG(Debug, "CMyFFmpeg::thread_UnPacket()---> iVideoDelay[%d]=%dms; Not Audio Stream; Sleep(%dms); \n", iVideoPacketCount, iVideoFullDelay, iDelay);
             }
 
             //睡一会儿
             if (iDelay > 20)
             {
-                LOG(Debug, "CMyFFmpeg::thread_UnPacket()---> iVideoDelay[%d]=%dms; iAudioDelay[%d]=%dms; Sleep(%dms); \n\n", iVideoPacketCount, iVideoFullDelay, iAudioPacketCount, iAudioDelay, iDelay);
                 Sleep(iDelay);
             }
             else
             {
-                iDelay = 20;
-                LOG(Warn, "CMyFFmpeg::thread_UnPacket()---> iVideoDelay[%d]=%dms; iAudioDelay[%d]=%dms; Sleep(%dms); \n\n", iVideoPacketCount, iVideoFullDelay, iAudioPacketCount, iAudioDelay, iDelay);
-                Sleep(iDelay);
+                LOG(Warn, "CMyFFmpeg::thread_UnPacket()---> Sleep(20ms); \n\n");
+                Sleep(20);
             }
 
             //视频Packet列表
@@ -681,28 +753,33 @@ void CMyFFmpeg::thread_UnPacket()
                 LOG(Debug, "CMyFFmpeg::thread_UnPacket()---> SET (m_dAudioTimebase[%lf] * m_iAudioListDuration[%d] * 0.5) = iAudioFullDelay[%d]; \n", m_dAudioTimebase, iAudioDuration, iAudioFullDelay);
             }
 
-            //计算视频队列时长
-            int iVideoDelay = (m_dVideoTimebase * iVideoDuration * 0.5);
-            if (iVideoDelay < iAudioFullDelay)
+            //先取音频时长 (可能没有视频流)
+            iDelay = iAudioFullDelay;
+            if(m_iVideoStream >= 0)
             {
-                iDelay = iVideoDelay;
+                //计算视频队列时长
+                int iVideoDelay = (m_dVideoTimebase * iVideoDuration * 0.5);
+                if (iVideoDelay < iAudioFullDelay)
+                {
+                    iDelay = iVideoDelay;
+                }
+
+                LOG(Debug, "CMyFFmpeg::thread_UnPacket()---> iVideoDelay[%d]=%dms; iAudioDelay[%d]=%dms; Sleep(%dms); \n", iVideoPacketCount, iVideoDelay, iAudioPacketCount, iAudioFullDelay, iDelay);
             }
             else
             {
-                iDelay = iAudioFullDelay;
+                LOG(Debug, "CMyFFmpeg::thread_UnPacket()---> Not Video Stream; iAudioDelay[%d]=%dms; Sleep(%dms); \n\n", iAudioPacketCount, iAudioFullDelay, iDelay);
             }
 
             //睡一会儿
             if (iDelay > 20)
             {
-                LOG(Debug, "CMyFFmpeg::thread_UnPacket()---> iVideoDelay[%d]=%dms; iAudioDelay[%d]=%dms; Sleep(%dms); \n\n", iVideoPacketCount, iVideoDelay, iAudioPacketCount, iAudioFullDelay, iDelay);
                 Sleep(iDelay);
             }
             else
             {
-                iDelay = 20;
-                LOG(Warn, "CMyFFmpeg::thread_UnPacket()---> iVideoDelay[%d]=%dms; iAudioDelay[%d]=%dms; Sleep(%dms); \n\n", iVideoPacketCount, iVideoDelay, iAudioPacketCount, iAudioFullDelay, iDelay);
-                Sleep(iDelay);
+                LOG(Warn, "CMyFFmpeg::thread_UnPacket()---> Sleep(20ms); \n\n");
+                Sleep(20);
             }
 
             //音频Packet列表
@@ -954,8 +1031,7 @@ void CMyFFmpeg::thread_Video()
         iReadState = avcodec_receive_frame(m_pVideoCodecCtx, pAVFrame);
         if(iReadState == AVERROR_EOF)  // --- 解码器读尽，播放线程退出。---
         {
-            LOG(Info, "CMyFFmpeg::thread_Video()---> avcodec_receive_frame() = AVERROR_EOF; m_pMyVideoOutput->updatePlayState(enClose=%d); break; \n", enClose);
-            m_pMyVideoOutput->updatePlayState(enClose);
+            LOG(Info, "CMyFFmpeg::thread_Video()---> avcodec_receive_frame() = AVERROR_EOF; break; \n");
             break;
         }
         else if(iReadState == AVERROR(EINVAL))  //codec not opened, or it is an encoder
@@ -967,7 +1043,7 @@ void CMyFFmpeg::thread_Video()
         {
             LOG(Debug, "CMyFFmpeg::thread_Video()---> avcodec_receive_frame() = 0; \n");
 
-            LOG(Debug, "CMyFFmpeg::thread_Video()---> AVFrame[Video]: best_effort_timestamp=%lld, pts=%lld, format=%d, key_frame=%d, pict_type=%d, width=%d, height=%d; "
+            LOG(Debug, "CMyFFmpeg::thread_Video()---> AVFrame[Video]: best_effort_timestamp=0x%X, pts=%lld, format=%d, key_frame=%d, pict_type=%d, width=%d, height=%d; "
                    "pkt_pos=%lld, pkt_dts=%lld, pkt_duration=%lld, pkt_size=%d; "
                    "coded_picture_number=%d, display_picture_number=%d, repeat_pict=%d, interlaced_frame=%d; top_field_first=%d, flag=%d; \n",
                    pAVFrame->best_effort_timestamp,
@@ -1009,8 +1085,9 @@ void CMyFFmpeg::thread_Video()
                }
 
                //设置图像格式和尺寸
-               LOG(Info, "CMyFFmpeg::thread_Video()---> m_pMyVideoOutput->setVideoFormat(AV_PIX_FMT_YUV420P=0, width=%d, height=%d, iVideoStreamDuration=0x%X, pAVFrameYUV->data[0]); \n", pAVFrame->width, pAVFrame->height, m_iVideoStreamDuration);
+               LOG(Info, "CMyFFmpeg::thread_Video()---> m_pMyVideoOutput->setVideoFormat(AV_PIX_FMT_YUV420P=0, width=%d, height=%d, iVideoStreamDuration=0x%X, pAVFrameYUV->data[0]);  Sleep(10);\n", pAVFrame->width, pAVFrame->height, m_iVideoStreamDuration);
                m_pMyVideoOutput->setVideoFormat(AV_PIX_FMT_YUV420P, pAVFrame->width, pAVFrame->height, m_iVideoStreamDuration, pAVFrameYUV->data[0]);
+               Sleep(10);
            }
 
            //转换像素格式 return the height of the output slice
@@ -1204,6 +1281,11 @@ void CMyFFmpeg::thread_Video()
         pAVFrameYUV = NULL;
     }
 
+    //上报状态
+    m_sstrMessage_threadVideo = "File End";
+    LOG(Info, "CMyFFmpeg::thread_Video()---> m_pMyVideoOutput->updatePlayState(enPlayEnd[%d], m_sstrMessage_threadVideo); \n", enPlayEnd);
+    m_pMyVideoOutput->updatePlayState(enPlayEnd, m_sstrMessage_threadVideo);
+
     LOG(Info, "CMyFFmpeg::thread_Video() End \n");
 }
 
@@ -1252,8 +1334,7 @@ void CMyFFmpeg::thread_Audio()
         iAudioState = avcodec_receive_frame(m_pAudioCodecCtx, pAVFrame);
         if(iAudioState == AVERROR_EOF)  // --- 解码器读尽，播放线程结束。---
         {
-            LOG(Info, "CMyFFmpeg::thread_Audio()---> avcodec_receive_frame() = AVERROR_EOF; m_pMyAudioOutput->updatePlayState(enClose=%d); break; \n", enClose);
-            m_pMyAudioOutput->updatePlayState(enClose);
+            LOG(Info, "CMyFFmpeg::thread_Audio()---> avcodec_receive_frame() = AVERROR_EOF; break; \n");
             break;
         }
         else if(iAudioState == AVERROR(EINVAL))  //codec not opened, or it is an encoder
@@ -1265,7 +1346,7 @@ void CMyFFmpeg::thread_Audio()
         {
             LOG(Debug, "CMyFFmpeg::thread_Audio()---> avcodec_receive_frame() = 0; \n");
 
-            LOG(Debug, "CMyFFmpeg::thread_Audio()---> AVFrame[Audio]: best_effort_timestamp=%lld, pts=%lld, format=%d, key_frame=%d, pict_type=%d, width=%d, height=%d; "
+            LOG(Debug, "CMyFFmpeg::thread_Audio()---> AVFrame[Audio]: best_effort_timestamp=0x%X, pts=%lld, format=%d, key_frame=%d, pict_type=%d, width=%d, height=%d; "
                         "pkt_pos=%lld, pkt_dts=%lld, pkt_duration=%lld, pkt_size=%d; "
                         "coded_picture_number=%d, display_picture_number=%d, repeat_pict=%d, interlaced_frame=%d; top_field_first=%d, flag=%d; "
                         "sample_rate=%d, nb_samples=%d, channels=%d, channel_layout=%d; \n",
@@ -1510,6 +1591,11 @@ void CMyFFmpeg::thread_Audio()
         av_frame_free(&pAVFrame);
         //swr_free(&m_pAudioConvertCtx);
     }
+
+    //上报状态
+    m_sstrMessage_threadAudio = "File End";
+    LOG(Info, "CMyFFmpeg::thread_Audio()---> m_pMyAudioOutput->updatePlayState(enPlayEnd[%d], m_sstrMessage_threadAudio); \n", enPlayEnd);
+    m_pMyAudioOutput->updatePlayState(enPlayEnd, m_sstrMessage_threadAudio);
 
     LOG(Info, "CMyFFmpeg::thread_Audio() End \n");
 }

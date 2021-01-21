@@ -18,8 +18,9 @@ CMyFrameControlPanel::CMyFrameControlPanel()
 
     m_iYUVTimerId = 0;
 
-    m_iVideoPlayState = enClose;
-    m_iAudioPlayState = enClose;
+    m_iPlayButtonState = enClose;
+    //m_iVideoPlayState = enClose;
+    //m_iAudioPlayState = enClose;
 
     m_iVideoReportTotal = 0;
     m_iAudioReportTotal = 0;
@@ -37,8 +38,8 @@ CMyFrameControlPanel::CMyFrameControlPanel()
     m_pMyOpenGLWidget->initControlPanel(this);
 
     //更新播放状态
-    connect(m_pMyOpenGLWidget, &MyOpenGLWidget::sig_updatePlayState, this, &CMyFrameControlPanel::OnVideoPlayState);
-    connect(m_pMyAudioOutput, &CMyAudioOutput::signal_updatePlayState, this, &CMyFrameControlPanel::OnAudioPlayState);
+    connect(m_pMyOpenGLWidget, &MyOpenGLWidget::sig_updatePlayState, this, &CMyFrameControlPanel::OnUpdatePlayState);
+    connect(m_pMyAudioOutput, &CMyAudioOutput::signal_updatePlayState, this, &CMyFrameControlPanel::OnUpdatePlayState);
 
     //更新播放进度
     connect(m_pMyOpenGLWidget, &MyOpenGLWidget::sig_updatePlayStep, this, &CMyFrameControlPanel::OnVideoPlayStep);
@@ -207,6 +208,131 @@ MyOpenGLWidget *CMyFrameControlPanel::getMyOpenGLWidget()
     return m_pMyOpenGLWidget;
 }
 
+//设置播放按钮状态
+void CMyFrameControlPanel::setPlayButtonState(int iState)
+{
+    LOG(Info, "CMyFrameControlPanel::setPlayButtonState(iState=%d)... \n", iState);
+
+    m_iPlayButtonState = iState;
+
+    if (m_pPushButton_Play)
+    {
+        switch (m_iPlayButtonState)
+        {
+        case enClose:
+            LOG(Info, "CMyFrameControlPanel::setPlayButtonState()---> iState = enClose[%d]; m_pPushButton_Play->setStyleSheet(NULL); \n", enClose);
+            m_pPushButton_Play->setStyleSheet("");
+            //m_pPushButton_Play->setEnabled(false);
+            break;
+
+        case enPause:
+            //暂停时，显示播放按钮。
+            LOG(Info, "CMyFrameControlPanel::setPlayButtonState()---> iState = enPause[%d]; m_pPushButton_Play->setStyleSheet(NULL); \n", enPause);
+            m_pPushButton_Play->setStyleSheet("");
+            //m_pPushButton_Play->setEnabled(true);
+            break;
+
+        case enPlay:
+            //播放时，显示暂停按钮。
+            LOG(Info, "CMyFrameControlPanel::setPlayButtonState()---> iState = enPlay[%d]; m_pPushButton_Play->setStyleSheet(border-image: pause.png); \n", enPlay);
+            m_pPushButton_Play->setStyleSheet("border-image: url(D:/YDY/SourceCode/MyFFmpeg/MyPicture/pause.png);");
+            //m_pPushButton_Play->setEnabled(true);
+            break;
+
+        case enOpenSucc:  //废弃
+            LOG(Warn, "CMyFrameControlPanel::setPlayButtonState()---> iState = enOpenSucc[%d]; m_pPushButton_Play->setStyleSheet(NULL); \n", enOpenSucc);
+            m_pPushButton_Play->setStyleSheet("");
+            //m_pPushButton_Play->setEnabled(true);
+            break;
+
+        default:
+            LOG(Warn, "CMyFrameControlPanel::setPlayButtonState()---> Undefine iState[%d] \n", iState);
+            break;
+        }
+    }
+}
+
+//更新播放状态
+//void CMyFrameControlPanel::OnVideoPlayState(int iState)
+//{
+//    LOG(Info, "CMyFrameControlPanel::OnVideoPlayState( iState=%d )... \n", iState);
+
+//    m_iVideoPlayState = iState;
+
+//    if (m_pPushButton_Play)
+//    {
+//        switch (m_iVideoPlayState)
+//        {
+//        case enClose:
+//            LOG(Info, "CMyFrameControlPanel::OnVideoPlayState()---> m_pPushButton_Play->setStyleSheet(NULL), setEnabled(false); \n");
+//            m_pPushButton_Play->setStyleSheet("");
+//            m_pPushButton_Play->setEnabled(false);
+//            break;
+
+//        case enOpenSucc:
+//            LOG(Info, "CMyFrameControlPanel::OnVideoPlayState()---> m_pPushButton_Play->setStyleSheet(NULL), setEnabled(true); \n");
+//            m_pPushButton_Play->setStyleSheet("");
+//            m_pPushButton_Play->setEnabled(true);
+//            break;
+
+//        case enPlay:
+//            //播放时，显示暂停按钮。
+//            LOG(Info, "CMyFrameControlPanel::OnVideoPlayState()---> m_pPushButton_Play->setStyleSheet( border-image: pause.png ); \n");
+//            m_pPushButton_Play->setStyleSheet("border-image: url(D:/YDY/SourceCode/MyFFmpeg/MyPicture/pause.png);");
+//            break;
+
+//        case enPause:
+//            //暂停时，显示播放按钮。
+//            LOG(Info, "CMyFrameControlPanel::OnVideoPlayState()---> m_pPushButton_Play->setStyleSheet(NULL); \n");
+//            m_pPushButton_Play->setStyleSheet("");
+//            break;
+
+//        default:
+//            break;
+//        }
+//    }
+//}
+
+//void CMyFrameControlPanel::OnAudioPlayState(int iState)
+//{
+//    LOG(Info, "CMyFrameControlPanel::OnAudioPlayState( iState=%d )... \n", iState);
+
+//    m_iAudioPlayState = iState;
+
+//    if (m_pPushButton_Play)
+//    {
+//        switch (m_iAudioPlayState)
+//        {
+//        case enClose:
+//            LOG(Info, "CMyFrameControlPanel::OnAudioPlayState()---> m_pPushButton_Play->setStyleSheet(NULL), setEnabled(false); \n");
+//            m_pPushButton_Play->setStyleSheet("");
+//            m_pPushButton_Play->setEnabled(false);
+//            break;
+
+//        case enOpenSucc:
+//            LOG(Info, "CMyFrameControlPanel::OnAudioPlayState()---> m_pPushButton_Play->setStyleSheet(NULL), setEnabled(true); \n");
+//            m_pPushButton_Play->setStyleSheet("");
+//            m_pPushButton_Play->setEnabled(true);
+//            break;
+
+//        case enPlay:
+//            //播放时，显示暂停按钮。
+//            LOG(Info, "CMyFrameControlPanel::OnAudioPlayState()---> m_pPushButton_Play->setStyleSheet(border-image: pause.png); \n");
+//            m_pPushButton_Play->setStyleSheet("border-image: url(D:/YDY/SourceCode/MyFFmpeg/MyPicture/pause.png);");
+//            break;
+
+//        case enPause:
+//            //暂停时，显示播放按钮。
+//            LOG(Info, "CMyFrameControlPanel::OnAudioPlayState()---> m_pPushButton_Play->setStyleSheet(NULL); \n");
+//            m_pPushButton_Play->setStyleSheet("");
+//            break;
+
+//        default:
+//            break;
+//        }
+//    }
+//}
+
 //更新播放进度
 void CMyFrameControlPanel::OnVideoPlayStep(int iStep, int iVideoReportTotal)
 {
@@ -230,85 +356,43 @@ void CMyFrameControlPanel::OnAudioPlayStep(int iStep, int iAudioReportTotal)
     m_pSliderPlay->setValue(iStep);
 }
 
-//更新播放状态
-void CMyFrameControlPanel::OnVideoPlayState(int iState)
+//响应信号，更新播放按钮状态
+void CMyFrameControlPanel::OnUpdatePlayState(int iState, const char *pszMessage)
 {
-    LOG(Info, "CMyFrameControlPanel::OnVideoPlayState( iState=%d )... \n", iState);
+    LOG(Debug, "CMyFrameControlPanel::OnUpdatePlayState(iState=%d, pszMessage=%s)... \n", iState, pszMessage);
 
-    m_iVideoPlayState = iState;
-
-    if (m_pPushButton_Play)
+    switch(iState)
     {
-        switch (m_iVideoPlayState)
-        {
-        case enClose:
-            LOG(Info, "CMyFrameControlPanel::OnVideoPlayState()---> m_pPushButton_Play->setStyleSheet(NULL), setEnabled(false); \n");
-            m_pPushButton_Play->setStyleSheet("");
-            m_pPushButton_Play->setEnabled(false);
-            break;
+    case enOpenSucc:
+        LOG(Debug, "CMyFrameControlPanel::OnUpdatePlayState()---> iState = enOpenSucc[%d]; Do nothing... \n", enOpenSucc);
+        break;
 
-        case enOpen:
-            LOG(Info, "CMyFrameControlPanel::OnVideoPlayState()---> m_pPushButton_Play->setStyleSheet(NULL), setEnabled(true); \n");
-            m_pPushButton_Play->setStyleSheet("");
-            m_pPushButton_Play->setEnabled(true);
-            break;
+    case enOpenFail:
+        LOG(Info, "CMyFrameControlPanel::OnUpdatePlayState()---> iState = enOpenFail[%d]; setPlayButtonState(enClose = %d); \n", enOpenFail, enClose);
+        this->setPlayButtonState(enClose);  //设置播放按钮
 
-        case enPlay:
-            //播放时，显示暂停按钮。
-            LOG(Info, "CMyFrameControlPanel::OnVideoPlayState()---> m_pPushButton_Play->setStyleSheet( border-image: pause.png ); \n");
-            m_pPushButton_Play->setStyleSheet("border-image: url(D:/YDY/SourceCode/MyFFmpeg/MyPicture/pause.png);");
-            break;
+        //设置标题栏
+        m_qstrTitle = m_qstrFileName + "   --- " + pszMessage;
+        LOG(Debug, "CMyFrameControlPanel::OnUpdatePlayState()---> emit sig_setMainWindowTitle( sstrMessage ); \n");
+        emit sig_setMainWindowTitle(m_qstrTitle);  //向上层应用发信号
 
-        case enPause:
-            //暂停时，显示播放按钮。
-            LOG(Info, "CMyFrameControlPanel::OnVideoPlayState()---> m_pPushButton_Play->setStyleSheet(NULL); \n");
-            m_pPushButton_Play->setStyleSheet("");
-            break;
+        break;
 
-        default:
-            break;
-        }
+    case enPlayEnd:
+        LOG(Info, "CMyFrameControlPanel::OnUpdatePlayState()---> iState = enPlayEnd[%d]; setPlayButtonState(enClose[%d]); \n", enPlayEnd, enClose);
+        this->setPlayButtonState(enClose);  //设置播放按钮
+
+        //设置标题栏
+        m_qstrTitle = m_qstrFileName + "   --- " + pszMessage;
+        LOG(Debug, "CMyFrameControlPanel::OnUpdatePlayState()---> emit sig_setMainWindowTitle( sstrMessage ); \n");
+        emit sig_setMainWindowTitle(m_qstrTitle);  //向上层应用发信号
+
+        break;
+
+    default:
+        LOG(Debug, "CMyFrameControlPanel::OnUpdatePlayState()---> Undefine iState[%d]; Do nothing... \n", iState);
     }
-}
 
-void CMyFrameControlPanel::OnAudioPlayState(int iState)
-{
-    LOG(Info, "CMyFrameControlPanel::OnAudioPlayState( iState=%d )... \n", iState);
-
-    m_iAudioPlayState = iState;
-
-    if (m_pPushButton_Play)
-    {
-        switch (m_iAudioPlayState)
-        {
-        case enClose:
-            LOG(Info, "CMyFrameControlPanel::OnAudioPlayState()---> m_pPushButton_Play->setStyleSheet(NULL), setEnabled(false); \n");
-            m_pPushButton_Play->setStyleSheet("");
-            m_pPushButton_Play->setEnabled(false);
-            break;
-
-        case enOpen:
-            LOG(Info, "CMyFrameControlPanel::OnAudioPlayState()---> m_pPushButton_Play->setStyleSheet(NULL), setEnabled(true); \n");
-            m_pPushButton_Play->setStyleSheet("");
-            m_pPushButton_Play->setEnabled(true);
-            break;
-
-        case enPlay:
-            //播放时，显示暂停按钮。
-            LOG(Info, "CMyFrameControlPanel::OnAudioPlayState()---> m_pPushButton_Play->setStyleSheet(border-image: pause.png); \n");
-            m_pPushButton_Play->setStyleSheet("border-image: url(D:/YDY/SourceCode/MyFFmpeg/MyPicture/pause.png);");
-            break;
-
-        case enPause:
-            //暂停时，显示播放按钮。
-            LOG(Info, "CMyFrameControlPanel::OnAudioPlayState()---> m_pPushButton_Play->setStyleSheet(NULL); \n");
-            m_pPushButton_Play->setStyleSheet("");
-            break;
-
-        default:
-            break;
-        }
-    }
 }
 
 void CMyFrameControlPanel::OnButton_OpenFile()
@@ -324,6 +408,7 @@ void CMyFrameControlPanel::OnButton_OpenFile()
     }
 
     LOG(Info, "CMyFrameControlPanel::OnButton_OpenFile()---> QFileDialog::getOpenFileName() = %s \n", m_qstrFilePath.toStdString().c_str());
+    m_pLineEdit_FilePath->setText(m_qstrFilePath);  //显示文件名
 
     //杀定时器
     if(m_iYUVTimerId > 0)
@@ -344,74 +429,29 @@ void CMyFrameControlPanel::OnButton_OpenFile()
         m_pYUVBuffer = NULL;
     }
 
-    if (m_pMyFFmpeg)
+    if (m_pMyFFmpeg && !m_pMyFFmpeg->bClose())
     {
         LOG(Info, "CMyFrameControlPanel::OnButton_OpenFile()---> m_pMyFFmpeg->closeAVFile(); \n");
         m_pMyFFmpeg->closeAVFile();
     }
 
-    //更新视频状态
-    if (m_iVideoPlayState != enClose)
+    //设置播放按钮状态
+    if (m_iPlayButtonState != enClose)
     {
-        LOG(Info, "CMyFrameControlPanel::OnButton_OpenFile()---> OnVideoPlayState(enClose=%d); \n", enClose);
-        this->OnVideoPlayState(enClose);
+        LOG(Info, "CMyFrameControlPanel::OnButton_OpenFile()---> m_iPlayButtonState[%d] != enClose[%d]; setPlayButtonState(enClose = %d); \n", m_iPlayButtonState, enClose, enClose);
+        this->setPlayButtonState(enClose);
     }
 
-    //更新音频状态
-    if (m_iAudioPlayState != enClose)
-    {
-        LOG(Info, "CMyFrameControlPanel::OnButton_OpenFile()---> OnAudioPlayState(enClose=%d); \n", enClose);
-        this->OnAudioPlayState(enClose);
-    }
-
-    //--------------------------------------------------
-    //提取文件名
-    QFileInfo fileInfo(m_qstrFilePath);
-    m_qstrFileName = fileInfo.fileName();
-    m_pLineEdit_FilePath->setText(m_qstrFileName);  //显示文件名
-
-    //检查文件大小
-    m_iYUVFileSize = fileInfo.size();
-    qint64 iYUVFileSize = 1024 * 1024 * 1024;
-    iYUVFileSize = iYUVFileSize * 4;
-    if (m_iYUVFileSize > iYUVFileSize)
-    {
-        LOG(Warn, "CMyFrameControlPanel::OnButton_OpenFile()---> The file is too big! m_iFileSize[%d] > 4GB; emit sig_setPlayMessage(m_qstrMessage);\n", m_iYUVFileSize);
-        m_qstrMessage = m_qstrFilePath + "  --- The file is too big!";
-        emit sig_setPlayMessage(m_qstrMessage);
-        return;
-    }
-
-    //上报文件路径，显示在标题栏。
-    LOG(Info, "CMyFrameControlPanel::OnButton_OpenFile()---> emit sig_setPlayMessage(m_qstrFilePath); \n");
-    m_qstrMessage = m_qstrFilePath;
-    emit sig_setPlayMessage(m_qstrMessage);
-
-    //检查文件扩展名
-    m_qstrFileSuffix = fileInfo.suffix().toLower();
+    //更新纹理图片
     if (m_imageTexture.load(m_qstrFilePath))  //if (m_qstrFileSuffix == "png" || m_qstrFileSuffix == "jpg")
     {
         //更新纹理
-        LOG(Info, "CMyFrameControlPanel::OnButton_OpenFile()---> m_pMyOpenGLWidget->setImageTexture(m_imageTexture); \n");
+        LOG(Info, "CMyFrameControlPanel::OnButton_Play()---> m_pMyOpenGLWidget->setImageTexture(m_imageTexture); \n");
         m_pMyOpenGLWidget->setImageTexture(m_imageTexture);
     }
-    else if (m_qstrFileSuffix == "yuv")
-    {
-        //YUV视频
-        LOG(Info, "CMyFrameControlPanel::OnButton_OpenFile()---> openYUVFile(); \n");
-        openYUVFile(m_qstrFilePath);
-    }
-    else if(m_pMyFFmpeg)
-    {
-        //LOG(Info, "CMyFrameControlPanel::OnButton_OpenFile()---> Unknown type: %s \n", m_qstrFileName.toStdString().c_str());
-        LOG(Info, "CMyFrameControlPanel::OnButton_OpenFile()---> m_myFFmpeg.openAVFile(); \n");
-        std::string sstrFilePath = m_qstrFilePath.toStdString().c_str();
-        m_pMyFFmpeg->openAVFile(sstrFilePath);
-    }
-    else
-    {
-        LOG(Warn, "CMyFrameControlPanel::OnButton_OpenFile()---> Open file fail: %s \n", m_qstrFilePath.toStdString().c_str());
-    }
+
+    //--------------------------------------------------
+
 
     //LOG(Info, "CMyFrameControlPanel::OnButton_OpenFile() End \n");
 }
@@ -419,10 +459,119 @@ void CMyFrameControlPanel::OnButton_OpenFile()
 void CMyFrameControlPanel::OnButton_Play()
 {
     LOG(Info, "CMyFrameControlPanel::OnButton_Play()... \n");
-    LOG(Info, "CMyFrameControlPanel::OnButton_Play()---> m_iVideoPlayState=%d; m_iAudioPlayState=%d; \n", m_iVideoPlayState, m_iAudioPlayState);
 
-    if (m_iVideoPlayState == enPause || m_iAudioPlayState == enPause)
+    if (m_iPlayButtonState == enClose)
     {
+        //取用户输入
+        m_qstrFilePath = m_pLineEdit_FilePath->text();
+        LOG(Info, "CMyFrameControlPanel::OnButton_Play()---> m_iPlayButtonState = enClose[%d]; m_qstrFilePath = %s \n", enClose, m_qstrFilePath.toStdString().c_str());
+
+        //检查用户输入
+        QFileInfo fileInfo(m_qstrFilePath);
+        if(fileInfo.isDir())
+        {
+            //设置标题栏
+            m_qstrTitle = m_qstrFilePath + "is Dir";
+            LOG(Info, "CMyFrameControlPanel::OnButton_Play()---> emit sig_setMainWindowTitle( m_qstrFilePath is Dir ); \n");
+            emit sig_setMainWindowTitle(m_qstrTitle);  //向上层应用发信号
+
+            return;
+        }
+
+        if(fileInfo.isFile())
+        {
+            if(!fileInfo.exists())
+            {
+                //设置标题栏
+                m_qstrTitle = m_qstrFilePath + "File is not exist";
+                LOG(Info, "CMyFrameControlPanel::OnButton_Play()---> emit sig_setMainWindowTitle( File is not exist ); \n");
+                emit sig_setMainWindowTitle(m_qstrTitle);  //向上层应用发信号
+                return;
+            }
+
+            //提取文件名。
+            m_qstrFileName = fileInfo.fileName();
+
+            //检查文件大小
+            m_iYUVFileSize = fileInfo.size();
+            qint64 iYUVFileSize = 1024 * 1024 * 1024;
+            iYUVFileSize = iYUVFileSize * 4;
+            if (m_iYUVFileSize > iYUVFileSize)
+            {
+                LOG(Warn, "CMyFrameControlPanel::OnButton_Play()---> The file is too big! m_iFileSize[%d] > 4GB; emit sig_setMainWindowTitle(The file is too big); \n", m_iYUVFileSize);
+                m_qstrTitle = m_qstrFileName + "The file is too big!";
+                emit sig_setMainWindowTitle(m_qstrTitle);
+                return;
+            }
+
+            //检查文件扩展名
+            m_qstrFileSuffix = fileInfo.suffix().toLower();
+            if (m_qstrFileSuffix == "yuv")
+            {
+                //YUV视频
+                LOG(Info, "CMyFrameControlPanel::OnButton_Play()---> openYUVFile(); \n");
+                int iRet = openYUVFile(m_qstrFilePath);
+                if(iRet < 0)
+                {
+                    LOG(Warn, "CMyFrameControlPanel::OnButton_Play()---> openYUVFile() Fail; emit sig_setMainWindowTitle( openYUVFile() Fail ); \n");
+                    m_qstrTitle = m_qstrFileName + "openYUVFile() Fail";
+                    emit sig_setMainWindowTitle(m_qstrTitle);
+                    return;
+                }
+
+                //启动定时器
+                m_iYUVTimerId = this->startTimer(40);  //Qt::PreciseTimer精度计时
+                LOG(Info, "CMyFrameControlPanel::OnButton_Play()---> startTimer(40) = %d; \n", m_iYUVTimerId);
+            }
+            else if(m_pMyFFmpeg)
+            {
+                LOG(Info, "CMyFrameControlPanel::OnButton_Play()---> m_myFFmpeg.openAVFile(); \n");
+                std::string sstrFilePath = m_qstrFilePath.toStdString().c_str();
+                m_pMyFFmpeg->openAVFile(sstrFilePath);
+            }
+            else
+            {
+                LOG(Error, "CMyFrameControlPanel::OnButton_Play()---> m_pMyFFmpeg is NULL. return; \n\n");
+                return;
+            }
+
+            //设置标题栏
+            m_qstrTitle = m_qstrFileName;
+            LOG(Debug, "CMyFrameControlPanel::OnButton_Play()---> emit sig_setMainWindowTitle(m_qstrFileName); \n");
+            emit sig_setMainWindowTitle(m_qstrTitle);  //向上层应用发信号
+        }
+        else  //可能是流地址: rtsp://    rtmp://
+        {
+            //播放
+            if(m_pMyFFmpeg)
+            {
+                LOG(Info, "CMyFrameControlPanel::OnButton_Play()---> m_myFFmpeg.openAVFile(); May be is rtsp://... \n");
+                std::string sstrFilePath = m_qstrFilePath.toStdString().c_str();
+                m_pMyFFmpeg->openAVFile(sstrFilePath);
+            }
+            else
+            {
+                LOG(Error, "CMyFrameControlPanel::OnButton_Play()---> m_pMyFFmpeg is NULL. return; \n\n");
+                return;
+            }
+
+            //保存文件名
+            m_qstrFileName = m_qstrFilePath;
+
+            //设置标题栏
+            m_qstrTitle = m_qstrFilePath;
+            LOG(Debug, "CMyFrameControlPanel::OnButton_Play()---> emit sig_setMainWindowTitle(m_qstrFilePath); \n");
+            emit sig_setMainWindowTitle(m_qstrTitle);  //向上层应用发信号
+        }
+
+        //设置播放按钮状态
+        LOG(Debug, "CMyFrameControlPanel::OnButton_Play()---> setPlayButtonState(enPlay=%d); \n", enPlay);
+        this->setPlayButtonState(enPlay);
+    }
+    else if (m_iPlayButtonState == enPause)
+    {
+        LOG(Debug, "CMyFrameControlPanel::OnButton_Play()---> m_iPlayButtonState = enPause[%d]; \n", enPause);
+
         //取消暂停
         if (m_qstrFileSuffix == "yuv")
         {
@@ -430,30 +579,21 @@ void CMyFrameControlPanel::OnButton_Play()
             LOG(Info, "CMyFrameControlPanel::OnButton_Play()---> startTimer(40) = %d; \n", m_iYUVTimerId);
             m_iYUVTimerId = this->startTimer(40);  //Qt::PreciseTimer精度计时
         }
-        else if (m_pMyFFmpeg)
+        else if (m_pMyFFmpeg && m_pMyFFmpeg->bPause())
         {
             LOG(Info, "CMyFrameControlPanel::OnButton_Play()---> m_pMyFFmpeg->Pause(); \n");
             m_pMyFFmpeg->Pause();
         }
 
-        //------------------------------------------------------------------------------------
-
-        //更新视频状态
-        if (m_iVideoPlayState == enPause)
-        {
-            LOG(Info, "CMyFrameControlPanel::OnButton_Play()---> OnVideoPlayState(enPlay=%d); \n", enPlay);
-            this->OnVideoPlayState(enPlay);
-        }
-
-        //更新音频状态
-        if (m_iAudioPlayState == enPause)
-        {
-            LOG(Info, "CMyFrameControlPanel::OnButton_Play()---> OnAudioPlayState(enPlay=%d); \n", enPlay);
-            this->OnAudioPlayState(enPlay);
-        }
+        //设置播放按钮状态
+        LOG(Debug, "CMyFrameControlPanel::OnButton_Play()---> setPlayButtonState(enPlay=%d); \n", enPlay);
+        this->setPlayButtonState(enPlay);
     }
-    else if (m_iVideoPlayState == enPlay || m_iAudioPlayState == enPlay)
+    else if (m_iPlayButtonState == enPlay)
     {
+        LOG(Debug, "CMyFrameControlPanel::OnButton_Play()---> m_iPlayButtonState = enPlay[%d]; \n", enPlay);
+
+        //暂停播放
         if (m_qstrFileSuffix == "yuv")
         {
             //杀定时器
@@ -461,58 +601,41 @@ void CMyFrameControlPanel::OnButton_Play()
             this->killTimer(m_iYUVTimerId);
             m_iYUVTimerId = 0;
         }
-        else if (m_pMyFFmpeg)
+        else if (m_pMyFFmpeg && !m_pMyFFmpeg->bPause())
         {
             LOG(Info, "CMyFrameControlPanel::OnButton_Play()---> m_pMyFFmpeg->Pause(); \n");
             m_pMyFFmpeg->Pause();
         }
 
-        //更新视频状态
-        if (m_iVideoPlayState == enPlay)
-        {
-            LOG(Info, "CMyFrameControlPanel::OnButton_Play()---> OnVideoPlayState(enPause=%d); \n", enPause);
-            this->OnVideoPlayState(enPause);
-        }
-
-        //更新音频状态
-        if (m_iAudioPlayState == enPlay)
-        {
-            LOG(Info, "CMyFrameControlPanel::OnButton_Play()---> OnAudioPlayState(enPause=%d); \n", enPause);
-            this->OnAudioPlayState(enPause);
-        }
+        //设置播放按钮状态
+        LOG(Debug, "CMyFrameControlPanel::OnButton_Play()---> setPlayButtonState(enPause=%d); \n", enPause);
+        this->setPlayButtonState(enPause);
     }
-    else if (m_iVideoPlayState == enOpen || m_iAudioPlayState == enOpen)
+//    else if (m_iVideoPlayState == enOpenSucc || m_iAudioPlayState == enOpenSucc)  //废弃
+//    {
+//        //启动播放
+//        if (m_qstrFileSuffix == "yuv")
+//        {
+//            //启动定时器
+//            LOG(Info, "CMyFrameControlPanel::OnButton_Play()---> startTimer(40) = %d; \n", m_iYUVTimerId);
+//            m_iYUVTimerId = this->startTimer(40);  //Qt::PreciseTimer精度计时
+//        }
+//        else if (m_pMyFFmpeg)
+//        {
+//            LOG(Info, "CMyFrameControlPanel::OnButton_Play()---> m_pMyFFmpeg->Play(); \n");
+//            m_pMyFFmpeg->Play();
+//        }
+
+//        //设置播放按钮状态
+//        LOG(Info, "CMyFrameControlPanel::OnButton_Play()---> setPlayButtonState(enPlay=%d); \n", enPlay);
+//        this->setPlayButtonState(enPlay);
+//    }
+    else
     {
-        //启动播放
-        if (m_qstrFileSuffix == "yuv")
-        {
-            //启动定时器
-            LOG(Info, "CMyFrameControlPanel::OnButton_Play()---> startTimer(40) = %d; \n", m_iYUVTimerId);
-            m_iYUVTimerId = this->startTimer(40);  //Qt::PreciseTimer精度计时 
-        }
-        else if (m_pMyFFmpeg)
-        {
-            LOG(Info, "CMyFrameControlPanel::OnButton_Play()---> m_pMyFFmpeg->Play(); \n");
-            m_pMyFFmpeg->Play();
-        }
-
-        //------------------------------------------------------------------------------------
-
-        //更新视频状态
-        if (m_iVideoPlayState == enOpen)
-        {
-            LOG(Info, "CMyFrameControlPanel::OnButton_Play()---> OnVideoPlayState(enPlay=%d); \n", enPlay);
-            this->OnVideoPlayState(enPlay);
-        }
-
-        //更新音频状态
-        if (m_iAudioPlayState == enOpen)
-        {
-            LOG(Info, "CMyFrameControlPanel::OnButton_Play()---> OnAudioPlayState(enPlay=%d); \n", enPlay);
-            this->OnAudioPlayState(enPlay);
-        }
+        LOG(Warn, "CMyFrameControlPanel::OnButton_Play()---> Undefine m_iPlayButtonState = %d; \n", enPause);
     }
 
+    LOG(Info, "CMyFrameControlPanel::OnButton_Play() End \n\n");
 }
 
 void CMyFrameControlPanel::OnButton_Voice()
@@ -546,7 +669,7 @@ void CMyFrameControlPanel::timerEvent(QTimerEvent *event)
 //    this->hide();
 //}
 
-void CMyFrameControlPanel::openYUVFile(QString &qstrFileName)
+int CMyFrameControlPanel::openYUVFile(QString &qstrFileName)
 {
     LOG(Info, "CMyFrameControlPanel::openYUVFile()... \n");
 
@@ -580,7 +703,7 @@ void CMyFrameControlPanel::openYUVFile(QString &qstrFileName)
 
     //映射新文件
     m_pFileYUV = new QFile(qstrFileName);  //m_pFileYUV->setFileName(qstrFileName);
-    if(m_pFileYUV->open(QIODevice::ReadOnly))
+    if(m_pFileYUV && m_pFileYUV->open(QIODevice::ReadOnly))
     {
         //映射文件到内存
         m_pYUVBuffer = m_pFileYUV->map(0, m_iYUVFileSize);
@@ -604,13 +727,22 @@ void CMyFrameControlPanel::openYUVFile(QString &qstrFileName)
         //m_pPushButton_Play->setEnabled(true);
 
         //更新播放状态
-        LOG(Info, "CMyFrameControlPanel::openYUVFile()---> OnVideoPlayState(enOpen=%d); \n", enOpen);
-        this->OnVideoPlayState(enOpen);
+        //LOG(Info, "CMyFrameControlPanel::openYUVFile()---> OnVideoPlayState(enOpen=%d); \n", enOpenSucc);
+        //this->OnVideoPlayState(enOpenSucc);
+
+        return 1;
     }
-    else
+
+    //销毁文件指针
+    if(m_pFileYUV)
     {
-        LOG(Warn, "CMyFrameControlPanel::openYUVFile()---> Open file fail: %s \n", qstrFileName.toStdString().c_str());
+        //m_pFileYUV->close();
+        delete m_pFileYUV;
+        m_pFileYUV = NULL;
     }
+
+    LOG(Warn, "CMyFrameControlPanel::openYUVFile()---> Open file fail: %s \n", qstrFileName.toStdString().c_str());
+    return -1;
 }
 
 //ds_480x272.yuv
@@ -641,7 +773,7 @@ void CMyFrameControlPanel::playYUVFrame()
     }
 
     //显示图像
-    LOG(Debug, "CMyFrameControlPanel::playYUVFrame()---> m_pMyVideoOutput->updateVideoData(pAVFrameYUV->data[0]); \n");
+    //LOG(Debug, "CMyFrameControlPanel::playYUVFrame()---> m_pMyVideoOutput->updateVideoData(pAVFrameYUV->data[0]); \n");
     m_pMyOpenGLWidget->updateVideoData(m_pYUVBuffer + m_iPlayPos, m_iPlayPos, m_iYUVFrameSize); //(pAVFrameYUV->data[0]);
     //m_pMyOpenGLWidget->updateYUVTexture(m_pYUVBuffer + m_iPlayPos);
     m_iPlayPos += m_iYUVFrameSize;

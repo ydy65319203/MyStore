@@ -50,10 +50,18 @@ enum GraphicsType
 
 enum PlayState
 {
+    //播放按钮状态
     enClose = 0,
-    enOpen,
-    enPlay,
     enPause,
+    enPlay,
+
+    //FFMpeg通知上层应用
+    enOpenSucc,
+    enOpenFail,
+
+    enPlayEnd,
+    //enPlayIng,
+    //enPlayFail,
 };
 
 
@@ -84,7 +92,7 @@ public:
 
     void setVideoFormat(int iPixelFormat, int iWidth, int iHeight, int64_t iVideoStreamDuration, unsigned char *pData);  //AVPixelFormat: AV_PIX_FMT_YUV420P=0; AV_PIX_FMT_RGB24=2;
     void updateVideoData(unsigned char *pYUVFrame, int64_t iPts, int64_t iDuration);
-    void updatePlayState(int iState);  //更新播放状态
+    void updatePlayState(int iState, std::string & sstrMessage);  //更新播放状态
 
     void setReportFlag(bool bReport);  //设置上报标志
     void setVideoStreamDuration(int iNum, int iDen, int64_t iVideoStreamDuration);
@@ -94,9 +102,9 @@ public slots:
     void OnUpdateMyWindow();
 
 signals:
-    void sig_setVideoFormat(int iPixelFormat, int iWidth, int iHeight, unsigned char *pData);  //用于内部同步纹理格式
     void sig_updatePlayStep(int iStep, int iReportTotal);  //向上层报告播放进度
-    void sig_updatePlayState(int iState);  //向上层应用报告状态
+    void sig_updatePlayState(int iState, const char *pszMessage);  //向上层应用报告状态
+    void sig_setVideoFormat(int iPixelFormat, int iWidth, int iHeight, unsigned char *pData);  //用于内部同步纹理格式
     void sig_updateMyWindow();  //用于内部update();
 
 protected:

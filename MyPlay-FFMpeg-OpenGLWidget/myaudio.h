@@ -68,15 +68,11 @@ public:
     void pauseAudioOutput();
     void stopAudioOutput();
 
-    void updatePlayState(int iState);  //更新播放状态
-
+    void setVolume(int iValue);
     void setReportFlag(bool bReport);  //设置上报标志
-    //void setAudioStreamDuration(int iNum, int iDen, int64_t iAudioStreamDuration);
+    void updatePlayState(int iState, std::string & sstrMessage);  //更新播放状态
 
     int setAudioFormat(int iChannel, int iSampleRate, int iSampleFormat, int64_t iAudioStreamDuration);
-    //int setFrameBuffer(CMyFrameBuffer *pMyFrameBuffer);
-    //int setFrameBuffer(int iFrameData, int iFrameCount);
-    int setVolume(int iValue);
 
     qint64 writeData(const char *data, qint64 len) override;
     qint64 readData(char *data, qint64 maxlen) override;
@@ -93,13 +89,13 @@ public slots:
     void OnStopAudioOutput();
 
 signals:
-    void signal_startAudioOutput();
+    void signal_startAudioOutput();  //用于内部同步
     void signal_pauseAudioOutput();
     void signal_stopAudioOutput();
 
     void signal_volume(int iVolume);  //向上层应用报告音量
-    void signal_updatePlayState(int iState);  //向上层应用报告状态
     void signal_updatePlayStep(int iStep, int iReportTotal);  //向上层报告播放进度
+    void signal_updatePlayState(int iState, const char *pszMessage);  //向上层应用报告状态
 
 private:
     QAudioFormat  m_audioFormat;    //音频格式

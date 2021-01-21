@@ -107,9 +107,6 @@ void MyOpenGLWidget::setGraphicsTypeCube()
 
 void MyOpenGLWidget::setGraphicsTypePlane()
 {
-    //LOG(Info, "MyOpenGLWidget::setGraphicsTypePlane()---> setPlayState(enOpen); \n");
-    //this->updatePlayState(enOpen);
-
     m_enGraphicsType = enPlane;
     m_bQuartering = false;
     update();
@@ -175,12 +172,6 @@ void MyOpenGLWidget::updateYUVTexture(unsigned char *pYUVFrame)
     m_enTextureType = enYUVTextureUpdate;
     m_pYUVFrame = pYUVFrame;
     update();
-}
-
-void MyOpenGLWidget::updatePlayState(int iState)
-{
-    LOG(Info, "MyOpenGLWidget::updatePlayState()---> emit sig_updatePlayState(iState=%d); \n", iState);
-    emit sig_updatePlayState(iState);
 }
 
 void MyOpenGLWidget::setReportFlag(bool bReport)
@@ -275,14 +266,23 @@ void MyOpenGLWidget::updateVideoData(unsigned char *pYUVFrame, int64_t iPts, int
         {
 
             int iStep = iPts / m_iReportInterval;
-            LOG(Debug, "MyOpenGLWidget::updateVideoData()---> iPts[%d] / m_iReportInterval[%d] = iStep[%d]; emit signal_updatePlayStep(iStep=%d, m_iReportTotal=%d); \n",
-                       iPts, m_iReportInterval, iStep, iStep, m_iReportTotal);
+            //LOG(Debug, "MyOpenGLWidget::updateVideoData()---> iPts[%d] / m_iReportInterval[%d] = iStep[%d]; emit signal_updatePlayStep(iStep=%d, m_iReportTotal=%d); \n", iPts, m_iReportInterval, iStep, iStep, m_iReportTotal);
             emit sig_updatePlayStep(iStep, m_iReportTotal);
             m_iReportDuration = 0;
         }
     }
 }
 
+void MyOpenGLWidget::updatePlayState(int iState, std::string & sstrMessage)
+{
+    LOG(Debug, "MyOpenGLWidget::updatePlayState(iState=%d, sstrMessage=%s)... \n", iState, sstrMessage.c_str());
+
+    if(m_bReportStep)
+    {
+        LOG(Debug, "MyOpenGLWidget::updatePlayState()---> emit sig_updatePlayState(iState=%d, sstrMessage); \n", iState);
+        emit sig_updatePlayState(iState, sstrMessage.c_str());
+    }
+}
 
 //发出信号: sig_updateMyWindow
 void MyOpenGLWidget::updateMyWindow()
@@ -368,6 +368,9 @@ void MyOpenGLWidget::OnSetVideoFormat(int iPixelFormat, int iWidth, int iHeight,
         //m_iYFrameSize = m_iHeight * m_iWidth;  //计算Y分量的帧尺寸
         //m_iUFrameSize = m_iYFrameSize / 4;     //YUV420P格式: YUV=4:1:1
     }
+
+    //刷新窗口
+    updateMyWindow();
 }
 
 //槽函数
@@ -713,9 +716,11 @@ void MyOpenGLWidget::initTexture()
 //选择着色器
 void MyOpenGLWidget::paintGL_TextureProgram()
 {
+    //LOG(Debug, "MyOpenGLWidget::paintGL_TextureProgram( m_enTextureType = %d )... \n", m_enTextureType);
+
     if(m_enTextureType == enImageTextureCreate || m_enTextureType == enImageTextureUpdate)  //创建图片纹理
     {
-        LOG(Info, "MyOpenGLWidget::paintGL_TextureProgram()---> m_enTextureType=%d; Create image Texture. \n", m_enTextureType);
+        LOG(Info, "MyOpenGLWidget::paintGL_TextureProgram()---> m_enTextureType = enImageTextureCreate[%d]; Create image Texture. \n", m_enTextureType);
 
         //更新纹理状态
         m_enTextureType = enImageTextureShow;
@@ -730,39 +735,41 @@ void MyOpenGLWidget::paintGL_TextureProgram()
 
         //创建纹理对象
         m_pTexture = new QOpenGLTexture(m_imageTexture);
-
-        //绑定纹理对象
-        m_pTexture->bind(0);  //0---30 可改
-
-        //绑定着色器
-        if(m_pShaderProgram)
+        if(m_pTexture)
         {
-            m_pShaderProgram->bind();
-            m_pShaderProgram->setUniformValue("texSampler2D", 0);  //--对应绑定的纹理对象
-            m_pShaderProgram->setUniformValue("mat4MVP", m_Matrix4MVP);
+            //绑定纹理对象
+            m_pTexture->bind(0);  //0---30 可改
+
+//            //绑定着色器
+//            if(m_pShaderProgram)
+//            {
+//                m_pShaderProgram->bind();
+//                m_pShaderProgram->setUniformValue("texSampler2D", 0);  //--对应绑定的纹理对象
+//                m_pShaderProgram->setUniformValue("mat4MVP", m_Matrix4MVP);
+//            }
         }
     }
     else if(m_enTextureType == enImageTextureShow)
     {
-        //LOG(Debug, "MyOpenGLWidget::paintGL_TextureProgram()---> m_enTextureType=%d; Show image Texture. \n", m_enTextureType);
+        //LOG(Debug, "MyOpenGLWidget::paintGL_TextureProgram()---> m_enTextureType = enImageTextureShow[%d]; Show image Texture. \n", m_enTextureType);
 
         if(m_pTexture)
         {
             //绑定纹理对象
             m_pTexture->bind(0);  //0---30 可改
 
-            //绑定着色器
-            if(m_pShaderProgram)
-            {
-                m_pShaderProgram->bind();
-                m_pShaderProgram->setUniformValue("texSampler2D", 0);  //--对应绑定的纹理对象
-                m_pShaderProgram->setUniformValue("mat4MVP", m_Matrix4MVP);
-            }
+//            //绑定着色器
+//            if(m_pShaderProgram)
+//            {
+//                m_pShaderProgram->bind();
+//                m_pShaderProgram->setUniformValue("texSampler2D", 0);  //--对应绑定的纹理对象
+//                m_pShaderProgram->setUniformValue("mat4MVP", m_Matrix4MVP);
+//            }
         }
     }
     else if(m_enTextureType == enYUVTextureCreate)  //创建YUV纹理
     {
-        LOG(Info, "MyOpenGLWidget::paintGL_TextureProgram()---> m_enTextureType=%d; Create YUV Texture. \n", m_enTextureType);
+        LOG(Info, "MyOpenGLWidget::paintGL_TextureProgram()---> m_enTextureType = enYUVTextureCreate[%d]; Create YUV Texture. \n", m_enTextureType);
 
         //更新纹理状态
         m_enTextureType = enYUVTextureShow;
@@ -807,7 +814,7 @@ void MyOpenGLWidget::paintGL_TextureProgram()
     }
     else if(m_enTextureType == enYUVTextureUpdate)  //更新YUV纹理
     {
-        //LOG(Debug, "MyOpenGLWidget::paintGL_TextureProgram()---> m_enTextureType=%d; Update YUV Texture. \n", m_enTextureType);
+        //LOG(Debug, "MyOpenGLWidget::paintGL_TextureProgram()---> m_enTextureType = enYUVTextureUpdate[%d];  Update YUV Texture. \n", m_enTextureType);
 
         //更新纹理状态
         m_enTextureType = enYUVTextureShow;
@@ -830,7 +837,7 @@ void MyOpenGLWidget::paintGL_TextureProgram()
     }
     else if(m_enTextureType == enYUVTextureShow)  //显示YUV纹理
     {
-        //LOG(Debug, "MyOpenGLWidget::paintGL_TextureProgram()---> m_enTextureType=%d; Show YUV Texture. \n", m_enTextureType);
+        //LOG(Debug, "MyOpenGLWidget::paintGL_TextureProgram()---> m_enTextureType = enYUVTextureShow[%d];  Show YUV Texture. \n", m_enTextureType);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, m_uTextureId[0]);
 
@@ -843,6 +850,26 @@ void MyOpenGLWidget::paintGL_TextureProgram()
     else
     {
         LOG(Warn, "MyOpenGLWidget::paintGL_TextureProgram()---> Undefine m_enTextureType=%d; \n", m_enTextureType);
+    }
+
+    //绑定着色器
+    if(enYUVTextureShow == m_enTextureType && m_pShaderProgramYUV)
+    {
+        m_pShaderProgramYUV->bind();
+        m_pShaderProgramYUV->setUniformValue("texSampler2D_Y", 0);  //GL_TEXTURE0
+        m_pShaderProgramYUV->setUniformValue("texSampler2D_U", 1);  //GL_TEXTURE1
+        m_pShaderProgramYUV->setUniformValue("texSampler2D_V", 2);  //GL_TEXTURE2
+        m_pShaderProgramYUV->setUniformValue("mat4MVP", m_Matrix4MVP);
+    }
+    else if(enImageTextureShow == m_enTextureType && m_pShaderProgram)
+    {
+        m_pShaderProgram->bind();
+        m_pShaderProgram->setUniformValue("texSampler2D", 0);  //--对应绑定的纹理对象
+        m_pShaderProgram->setUniformValue("mat4MVP", m_Matrix4MVP);
+    }
+    else
+    {
+        LOG(Warn, "MyOpenGLWidget::paintGL_TextureProgram()---> Bind Shader fail! \n");
     }
 
 //    else if(m_enTextureType == enYUVTexture)  //YUV纹理
@@ -897,26 +924,6 @@ void MyOpenGLWidget::paintGL_TextureProgram()
 //            glActiveTexture(GL_TEXTURE2);
 //            glBindTexture(GL_TEXTURE_2D, m_uTextureId[2]);
 //        }
-
-        //绑定着色器
-        if(enYUVTextureShow == m_enTextureType && m_pShaderProgramYUV)
-        {
-            m_pShaderProgramYUV->bind();
-            m_pShaderProgramYUV->setUniformValue("texSampler2D_Y", 0);  //GL_TEXTURE0
-            m_pShaderProgramYUV->setUniformValue("texSampler2D_U", 1);  //GL_TEXTURE1
-            m_pShaderProgramYUV->setUniformValue("texSampler2D_V", 2);  //GL_TEXTURE2
-            m_pShaderProgramYUV->setUniformValue("mat4MVP", m_Matrix4MVP);
-        }
-        else if(enImageTextureShow == m_enTextureType && m_pShaderProgram)
-        {
-            m_pShaderProgram->bind();
-            m_pShaderProgram->setUniformValue("texSampler2D", 0);  //--对应绑定的纹理对象
-            m_pShaderProgram->setUniformValue("mat4MVP", m_Matrix4MVP);
-        }
-        else
-        {
-            LOG(Warn, "MyOpenGLWidget::paintGL_TextureProgram()---> Bind Shader fail! \n");
-        }
 }
 
 void MyOpenGLWidget::drawGraphics()

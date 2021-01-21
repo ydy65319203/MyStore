@@ -27,8 +27,8 @@ MainWindow::MainWindow(QWidget *parent)
 //    this->setStatusBar(NULL);  //没有状态栏
 
     //标题栏显示文件路径
-    connect(m_pFrameControlPanel, &CMyFrameControlPanel::sig_setPlayMessage, this, &MainWindow::setPlayMessage);
-    m_qstrMessage = "MyPlay Ver1.0  65319203@qq.com";
+    connect(m_pFrameControlPanel, &CMyFrameControlPanel::sig_setMainWindowTitle, this, &MainWindow::setMainWindowTitle);
+    m_qstrMessage = "MyPlay  Ver1.0   65319203@qq.com";
     this->setWindowTitle(m_qstrMessage);
     m_iTimerId = this->startTimer(500);
 }
@@ -43,7 +43,7 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::setPlayMessage(QString &qstrMessage)
+void MainWindow::setMainWindowTitle(QString &qstrTitle)
 {
     if(m_iTimerId > 0)
     {
@@ -51,7 +51,7 @@ void MainWindow::setPlayMessage(QString &qstrMessage)
         m_iTimerId = 0;
     }
 
-    this->setWindowTitle(qstrMessage);
+    this->setWindowTitle(qstrTitle);
 }
 
 void MainWindow::timerEvent(QTimerEvent *event)

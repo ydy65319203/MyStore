@@ -37,6 +37,9 @@ public:
     void Pause();
     //void SeekFrame();  //查找帧
 
+    bool bClose();
+    bool bPause();
+
 private:
     void thread_OpenAVFile();
     void thread_UnPacket();
@@ -89,6 +92,13 @@ private:
     std::thread  m_threadUnPacket;
     std::thread  m_threadVideo;
     std::thread  m_threadAudio;
+
+    //各线程上报消息
+    std::string m_sstrMessage_threadOpenAVFile;
+    std::string m_sstrMessage_threadUnPacket;
+    std::string m_sstrMessage_threadVideo;
+    std::string m_sstrMessage_threadAudio;
+    std::string m_sstrMessage;
 };
 
 #endif // CMYFFMPEG_H

@@ -27,14 +27,17 @@ public:
     ~CMyFrameControlPanel();
     MyOpenGLWidget* getMyOpenGLWidget();
 
+    void setPlayButtonState(int iState);  //设置播放按钮状态
+    //void OnVideoPlayState(int iState);  //废弃
+    //void OnAudioPlayState(int iState);
+
 signals:
-    void sig_setPlayMessage(QString & qstrMessage);
+    void sig_setMainWindowTitle(QString & qstrTitle);  //向上层应用传递消息，设置标题栏
 
 public slots:
+    void OnUpdatePlayState(int iState, const char *pszMessage);  //响应信号，更新播放状态。
     void OnVideoPlayStep(int iStep, int iVideoReportTotal);
     void OnAudioPlayStep(int iStep, int iAudioReportTotal);
-    void OnVideoPlayState(int iState);
-    void OnAudioPlayState(int iState);
     void OnButton_OpenFile();
     void OnButton_Play();
 
@@ -61,7 +64,7 @@ protected:
     //void dropEvent(QDropEvent* event) override;
 
 private:
-    void openYUVFile(QString &qstrFileName);
+    int openYUVFile(QString &qstrFileName);
     void parseYUVFileName(QString &qstrFileName, int &iWidth, int &iHeight);
     void playYUVFrame();
 
@@ -76,6 +79,8 @@ private:
     QPushButton  *m_pPushButton_Pause;     //暂停按钮
     QPushButton  *m_pPushButton_OpenFile;  //打开文件
     QLineEdit    *m_pLineEdit_FilePath;    //显示文件路径
+
+    QPushButton  *m_pPushButton_Repeat;    //重复播放按钮
 
     QPushButton *m_pPushButton_SplitWindow;   //分割窗口
     QPushButton *m_pPushButton_Cube;   //立方体
@@ -93,10 +98,10 @@ private:
 
     //-----------------------------
 
+    QString m_qstrTitle;       //窗口标题
     QString m_qstrFilePath;    //文件全路径名
     QString m_qstrFileName;    //文件全名(带扩展名)
     QString m_qstrFileSuffix;  //文件名后缀 .yuv
-    QString m_qstrMessage;     //外发提示消息
 
     qint64 m_iYUVFrameSize;
     qint64 m_iYUVFileSize;
@@ -108,11 +113,14 @@ private:
 
     int m_iYUVTimerId;
 
-    int m_iVideoPlayState;
-    int m_iAudioPlayState;
+    int m_iPlayButtonState;    //播放按钮状态
+    //int m_iVideoPlayState;   //播放状态
+    //int m_iAudioPlayState;
 
     int m_iVideoReportTotal;  //播放进度条总步长
     int m_iAudioReportTotal;
+
+    bool m_bRepeat;  //重复播放标志
 };
 
 #endif // CMYFRAMECONTROLPANEL_H

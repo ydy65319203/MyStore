@@ -178,7 +178,7 @@ void CMyWidgetControlPanel::OnVideoPlayState(int iState)
             m_pPushButton_Play->setEnabled(false);
             break;
 
-        case enOpen:
+        case enOpenSucc:
             LOG(Info, "CMyWidgetControlPanel::OnVideoPlayState()---> m_pPushButton_Play->setStyleSheet(NULL), setEnabled(true); \n");
             m_pPushButton_Play->setStyleSheet("");
             m_pPushButton_Play->setEnabled(true);
@@ -217,7 +217,7 @@ void CMyWidgetControlPanel::OnAudioPlayState(int iState)
             m_pPushButton_Play->setEnabled(false);
             break;
 
-        case enOpen:
+        case enOpenSucc:
             LOG(Info, "CMyWidgetControlPanel::OnAudioPlayState()---> m_pPushButton_Play->setStyleSheet(NULL), setEnabled(true); \n");
             m_pPushButton_Play->setStyleSheet("");
             m_pPushButton_Play->setEnabled(true);
@@ -382,7 +382,7 @@ void CMyWidgetControlPanel::OnButton_Play()
             this->OnAudioPlayState(enPause);
         }
     }
-    else if (m_iVideoPlayState == enOpen || m_iAudioPlayState == enOpen)
+    else if (m_iVideoPlayState == enOpenSucc || m_iAudioPlayState == enOpenSucc)
     {
         //启动播放
         if (m_qstrFileSuffix == "yuv")
@@ -400,14 +400,14 @@ void CMyWidgetControlPanel::OnButton_Play()
         //------------------------------------------------------------------------------------
 
         //更新视频状态
-        if (m_iVideoPlayState == enOpen)
+        if (m_iVideoPlayState == enOpenSucc)
         {
             LOG(Info, "CMyFrameControlPanel::OnButton_Play()---> OnVideoPlayState(enPlay=%d); \n", enPlay);
             this->OnVideoPlayState(enPlay);
         }
 
         //更新音频状态
-        if (m_iAudioPlayState == enOpen)
+        if (m_iAudioPlayState == enOpenSucc)
         {
             LOG(Info, "CMyFrameControlPanel::OnButton_Play()---> OnAudioPlayState(enPlay=%d); \n", enPlay);
             this->OnAudioPlayState(enPlay);
@@ -473,8 +473,8 @@ void CMyWidgetControlPanel::openYUVFile(QString &qstrFileName)
         //m_pPushButton_Play->setEnabled(true);
 
         //更新播放状态
-        LOG(Info, "CMyFrameControlPanel::openYUVFile()---> OnVideoPlayState(enOpen=%d); \n", enOpen);
-        this->OnVideoPlayState(enOpen);
+        LOG(Info, "CMyFrameControlPanel::openYUVFile()---> OnVideoPlayState(enOpen=%d); \n", enOpenSucc);
+        this->OnVideoPlayState(enOpenSucc);
     }
     else
     {
