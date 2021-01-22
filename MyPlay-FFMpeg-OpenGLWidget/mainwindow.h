@@ -19,7 +19,7 @@ public:
     ~MainWindow();
 
 public slots:
-    void setPlayMessage(QString & qstrMessage);
+    void setMainWindowTitle(QString & qstrTitle);
 
 protected:
     void timerEvent(QTimerEvent *event) override;
