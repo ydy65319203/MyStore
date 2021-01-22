@@ -28,7 +28,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     //标题栏显示文件路径
     connect(m_pFrameControlPanel, &CMyFrameControlPanel::sig_setMainWindowTitle, this, &MainWindow::setMainWindowTitle);
-    m_qstrMessage = "MyPlay  Ver1.0   65319203@qq.com";
+    m_qstrMessage = "YDY Player   Ver1.0    65319203@qq.com";
     this->setWindowTitle(m_qstrMessage);
     m_iTimerId = this->startTimer(500);
 }
