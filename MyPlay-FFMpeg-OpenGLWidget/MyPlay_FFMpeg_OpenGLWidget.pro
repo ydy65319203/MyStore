@@ -52,6 +52,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 RESOURCES += \
     resource.qrc
 
-RC_ICONS = YDYPlayer.ico
-
 DISTFILES +=
+
+VERSION  = 2021.1.25
+RC_ICONS = YDYPlayer.ico
