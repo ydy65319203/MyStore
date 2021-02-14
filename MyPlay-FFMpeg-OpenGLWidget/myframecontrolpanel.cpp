@@ -63,6 +63,14 @@ CMyFrameControlPanel::CMyFrameControlPanel()
     m_pLineEdit_FilePath->setObjectName("FilePath");
     //m_pLineEdit_FilePath->setClearButtonEnabled(true);
 
+    //下拉列表框中保存文件路径
+    m_pComboBox_FilePath = new QComboBox;
+    m_pComboBox_FilePath->addItem("aaaaaaaaaaaaaa111111111");
+    m_pComboBox_FilePath->addItem("bbb");
+    m_pComboBox_FilePath->setEditText("setEditText");
+    m_pComboBox_FilePath->setEditable(true);
+    m_pComboBox_FilePath->hide();
+
     connect(m_pPushButton_Play, &QPushButton::clicked, this, &CMyFrameControlPanel::OnButton_Play);
     connect(m_pPushButton_OpenFile, &QPushButton::clicked, this, &CMyFrameControlPanel::OnButton_OpenFile);
 
@@ -93,14 +101,13 @@ CMyFrameControlPanel::CMyFrameControlPanel()
     m_pSliderVolume->setSingleStep(1);
     m_pSliderVolume->setObjectName("Volume");
 
-    connect(m_pPushButton_SplitWindow, &QPushButton::clicked, m_pMyOpenGLWidget, &MyOpenGLWidget::setQuartering);
-    connect(m_pPushButton_Cube,  &QPushButton::clicked, m_pMyOpenGLWidget, &MyOpenGLWidget::setGraphicsTypeCube);
-    connect(m_pPushButton_Plane, &QPushButton::clicked, m_pMyOpenGLWidget, &MyOpenGLWidget::setGraphicsTypePlane);
-    connect(m_pPushButton_Ring,  &QPushButton::clicked, m_pMyOpenGLWidget, &MyOpenGLWidget::setGraphicsTypeRectRing);
+    connect(m_pPushButton_SplitWindow, &QPushButton::clicked, this, &CMyFrameControlPanel::OnButton_SplitWindow);
+    connect(m_pPushButton_Cube,  &QPushButton::clicked, this, &CMyFrameControlPanel::OnButton_Cube);
+    connect(m_pPushButton_Ring,  &QPushButton::clicked, this, &CMyFrameControlPanel::OnButton_Ring);
+    connect(m_pPushButton_Plane, &QPushButton::clicked, this, &CMyFrameControlPanel::OnButton_Plane);
     connect(m_pPushButton_Voice, &QPushButton::clicked, this, &CMyFrameControlPanel::OnButton_Voice);  //喇叭按钮
     connect(m_pSliderVolume, &QSlider::valueChanged, m_pMyAudioOutput, &CMyAudioOutput::setVolume);    //音量条
     connect(m_pMyAudioOutput, &CMyAudioOutput::signal_volume, m_pSliderVolume, &QSlider::setValue);
-
 
     //打开按钮横向布局
     QHBoxLayout *pHBoxLayoutOpenFile = new QHBoxLayout;
@@ -108,8 +115,9 @@ CMyFrameControlPanel::CMyFrameControlPanel()
     pHBoxLayoutOpenFile->addSpacing(10);
     pHBoxLayoutOpenFile->addWidget(m_pLineEdit_FilePath);
     pHBoxLayoutOpenFile->addWidget(m_pPushButton_OpenFile);
-    pHBoxLayoutOpenFile->addStretch();
-    //pHBoxLayoutOpenFile->addSpacing(50);
+    //pHBoxLayoutOpenFile->addWidget(m_pComboBox_FilePath);  //下拉列表
+    //pHBoxLayoutOpenFile->addStretch();
+    pHBoxLayoutOpenFile->addSpacing(50);
     pHBoxLayoutOpenFile->addWidget(m_pPushButton_Plane);
     pHBoxLayoutOpenFile->addWidget(m_pPushButton_Cube);
     pHBoxLayoutOpenFile->addWidget(m_pPushButton_Ring);
@@ -395,67 +403,7 @@ void CMyFrameControlPanel::OnUpdatePlayState(int iState, const char *pszMessage)
 
 }
 
-void CMyFrameControlPanel::OnButton_OpenFile()
-{
-    LOG(Info, "CMyFrameControlPanel::OnButton_OpenFile()... \n");
-
-    //取文件名  D:\YDY\SourceCode\MyFFmpeg\MyFilm
-    m_qstrFilePath = QFileDialog::getOpenFileName(this, QStringLiteral("选择纹理图片"), "D:\\YDY\\SourceCode\\MyFFmpeg\\MyFilm");
-    if (m_qstrFilePath.isEmpty())
-    {
-        LOG(Info, "CMyFrameControlPanel::OnButton_OpenFile()---> QFileDialog::getOpenFileName() = NULL; return; \n");
-        return;
-    }
-
-    LOG(Info, "CMyFrameControlPanel::OnButton_OpenFile()---> QFileDialog::getOpenFileName() = %s \n", m_qstrFilePath.toStdString().c_str());
-    m_pLineEdit_FilePath->setText(m_qstrFilePath);  //显示文件名
-
-    //杀定时器
-    if(m_iYUVTimerId > 0)
-    {
-        killTimer(m_iYUVTimerId);
-        m_iYUVTimerId = 0;
-    }
-
-    //关闭旧文件
-    if(m_pYUVBuffer && m_pFileYUV)
-    {
-        LOG(Info, "CMyFrameControlPanel::OnButton_OpenFile()---> m_pFileYUV->close(); \n");
-        m_pFileYUV->unmap(m_pYUVBuffer);
-        m_pFileYUV->close();
-        delete m_pFileYUV;
-        m_pFileYUV = NULL;
-        m_iPlayPos = 0;
-        m_pYUVBuffer = NULL;
-    }
-
-    if (m_pMyFFmpeg && !m_pMyFFmpeg->bClose())
-    {
-        LOG(Info, "CMyFrameControlPanel::OnButton_OpenFile()---> m_pMyFFmpeg->closeAVFile(); \n");
-        m_pMyFFmpeg->closeAVFile();
-    }
-
-    //设置播放按钮状态
-    if (m_iPlayButtonState != enClose)
-    {
-        LOG(Info, "CMyFrameControlPanel::OnButton_OpenFile()---> m_iPlayButtonState[%d] != enClose[%d]; setPlayButtonState(enClose = %d); \n", m_iPlayButtonState, enClose, enClose);
-        this->setPlayButtonState(enClose);
-    }
-
-    //更新纹理图片
-    if (m_imageTexture.load(m_qstrFilePath))  //if (m_qstrFileSuffix == "png" || m_qstrFileSuffix == "jpg")
-    {
-        //更新纹理
-        LOG(Info, "CMyFrameControlPanel::OnButton_Play()---> m_pMyOpenGLWidget->setImageTexture(m_imageTexture); \n");
-        m_pMyOpenGLWidget->setImageTexture(m_imageTexture);
-    }
-
-    //--------------------------------------------------
-
-
-    //LOG(Info, "CMyFrameControlPanel::OnButton_OpenFile() End \n");
-}
-
+//播放按钮
 void CMyFrameControlPanel::OnButton_Play()
 {
     LOG(Info, "CMyFrameControlPanel::OnButton_Play()... \n");
@@ -636,6 +584,125 @@ void CMyFrameControlPanel::OnButton_Play()
     }
 
     LOG(Info, "CMyFrameControlPanel::OnButton_Play() End \n\n");
+}
+
+void CMyFrameControlPanel::OnButton_OpenFile()
+{
+    LOG(Info, "CMyFrameControlPanel::OnButton_OpenFile()... \n");
+
+    //取文件名  D:\YDY\SourceCode\MyFFmpeg\MyFilm
+    m_qstrFilePath = QFileDialog::getOpenFileName(this, QStringLiteral("选择纹理图片"), "D:\\YDY\\SourceCode\\MyFFmpeg\\MyFilm");
+    if (m_qstrFilePath.isEmpty())
+    {
+        LOG(Info, "CMyFrameControlPanel::OnButton_OpenFile()---> QFileDialog::getOpenFileName() = NULL; return; \n");
+        return;
+    }
+
+    LOG(Info, "CMyFrameControlPanel::OnButton_OpenFile()---> QFileDialog::getOpenFileName() = %s \n", m_qstrFilePath.toStdString().c_str());
+    m_pLineEdit_FilePath->setText(m_qstrFilePath);  //显示文件名
+
+    //杀定时器
+    if(m_iYUVTimerId > 0)
+    {
+        killTimer(m_iYUVTimerId);
+        m_iYUVTimerId = 0;
+    }
+
+    //关闭旧文件
+    if(m_pYUVBuffer && m_pFileYUV)
+    {
+        LOG(Info, "CMyFrameControlPanel::OnButton_OpenFile()---> m_pFileYUV->close(); \n");
+        m_pFileYUV->unmap(m_pYUVBuffer);
+        m_pFileYUV->close();
+        delete m_pFileYUV;
+        m_pFileYUV = NULL;
+        m_iPlayPos = 0;
+        m_pYUVBuffer = NULL;
+    }
+
+    if (m_pMyFFmpeg && !m_pMyFFmpeg->bClose())
+    {
+        LOG(Info, "CMyFrameControlPanel::OnButton_OpenFile()---> m_pMyFFmpeg->closeAVFile(); \n");
+        m_pMyFFmpeg->closeAVFile();
+    }
+
+    //设置播放按钮状态
+    if (m_iPlayButtonState != enClose)
+    {
+        LOG(Info, "CMyFrameControlPanel::OnButton_OpenFile()---> m_iPlayButtonState[%d] != enClose[%d]; setPlayButtonState(enClose = %d); \n", m_iPlayButtonState, enClose, enClose);
+        this->setPlayButtonState(enClose);
+    }
+
+    //更新纹理图片
+    if (m_imageTexture.load(m_qstrFilePath))  //if (m_qstrFileSuffix == "png" || m_qstrFileSuffix == "jpg")
+    {
+        //更新纹理
+        LOG(Info, "CMyFrameControlPanel::OnButton_Play()---> m_pMyOpenGLWidget->setImageTexture(m_imageTexture); \n");
+        m_pMyOpenGLWidget->setImageTexture(m_imageTexture);
+    }
+
+    //--------------------------------------------------
+
+
+    //LOG(Info, "CMyFrameControlPanel::OnButton_OpenFile() End \n");
+}
+
+void CMyFrameControlPanel::OnButton_Cube()
+{
+    LOG(Info, "CMyFrameControlPanel::OnButton_Cube()... \n");
+
+    if(m_pMyOpenGLWidget)
+    {
+        m_pMyOpenGLWidget->setGraphicsTypeCube();
+    }
+}
+
+void CMyFrameControlPanel::OnButton_Ring()
+{
+    LOG(Info, "CMyFrameControlPanel::OnButton_Ring()... \n");
+
+    if(m_pMyOpenGLWidget)
+    {
+        m_pMyOpenGLWidget->setGraphicsTypeRectRing();
+    }
+}
+
+void CMyFrameControlPanel::OnButton_Plane()
+{
+    LOG(Info, "CMyFrameControlPanel::OnButton_Plane()... \n");
+
+    if(m_pMyOpenGLWidget)
+    {
+        m_pMyOpenGLWidget->resetXYZ();
+        m_pMyOpenGLWidget->setGraphicsTypePlane();
+    }
+
+    //-------------------------------------------------
+
+    if(m_pSliderX && m_pSliderX->value() != 0)
+    {
+        m_pSliderX->setValue(0);
+    }
+
+    if(m_pSliderY && m_pSliderY->value() != 0)
+    {
+        m_pSliderY->setValue(0);
+    }
+
+    if(m_pSliderZ && m_pSliderZ->value() != 0)
+    {
+        m_pSliderZ->setValue(0);
+    }
+}
+
+void CMyFrameControlPanel::OnButton_SplitWindow()
+{
+    LOG(Info, "CMyFrameControlPanel::OnButton_SplitWindow()... \n");
+
+    if(m_pMyOpenGLWidget)
+    {
+        m_pMyOpenGLWidget->setQuartering();
+    }
 }
 
 void CMyFrameControlPanel::OnButton_Voice()

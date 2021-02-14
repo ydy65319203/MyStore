@@ -82,6 +82,7 @@ public:
     void setGraphicsTypePlane();
     void setGraphicsTypeRectRing();
 
+    void resetXYZ();
     void rotateX(float fAngle = 10.0f);
     void rotateY(float fAngle = 10.0f);
     void rotateZ(float fAngle = 10.0f);

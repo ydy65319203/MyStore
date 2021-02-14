@@ -119,10 +119,27 @@ void MyOpenGLWidget::setGraphicsTypeRectRing()
     update();
 }
 
+void MyOpenGLWidget::resetXYZ()
+{
+    LOG(Debug, "MyOpenGLWidget::resetXYZ()... \n");
+    //m_Matrix4MVP.fill(0);
+
+    m_Matrix4MVP = QMatrix4x4();
+    m_fAngleX = 0.0f;
+    m_fAngleY = 0.0f;
+    m_fAngleZ = 0.0f;
+}
+
 void MyOpenGLWidget::rotateX(float fAngle)
 {
-//    qDebug("MyOpenGLWidget::rotateX(fAngle=%f)...", fAngle);
+    //qDebug("MyOpenGLWidget::rotateX(fAngle=%f)...", fAngle);
     float fRotate = fAngle - m_fAngleX;
+    if(-0.1f < fRotate && fRotate < 0.1f)
+    {
+        return;
+    }
+
+    //qDebug("MyOpenGLWidget::rotateX()---> fAngle[%f] - m_fAngleX[%f] = fRotate[%f];", fAngle, m_fAngleX, fRotate);
     m_Matrix4MVP.rotate(fRotate, 1.0f, 0, 0);
     m_fAngleX = fAngle;
     update();
@@ -132,6 +149,12 @@ void MyOpenGLWidget::rotateY(float fAngle)
 {
     //qDebug("MyOpenGLWidget::rotateY(fAngle=%f)...", fAngle);
     float fRotate = fAngle - m_fAngleY;
+    if(-0.1f < fRotate && fRotate < 0.1f)
+    {
+        return;
+    }
+
+    //qDebug("MyOpenGLWidget::rotateY()---> fAngle[%f] - m_fAngleY[%f] = fRotate[%f];", fAngle, m_fAngleY, fRotate);
     m_Matrix4MVP.rotate(fRotate, 0, 1.0f, 0);
     m_fAngleY = fAngle;
     update();
@@ -141,6 +164,12 @@ void MyOpenGLWidget::rotateZ(float fAngle)
 {
     //qDebug("MyOpenGLWidget::rotateZ(fAngle=%f)...", fAngle);
     float fRotate = fAngle - m_fAngleZ;
+    if(-0.1f < fRotate && fRotate < 0.1f)
+    {
+        return;
+    }
+
+    //qDebug("MyOpenGLWidget::rotateZ()---> fAngle[%f] - m_fAngleZ[%f] = fRotate[%f];", fAngle, m_fAngleZ, fRotate);
     m_Matrix4MVP.rotate(fRotate, 0, 0, 1.0f);
     m_fAngleZ = fAngle;
     update();

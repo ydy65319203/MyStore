@@ -10,6 +10,8 @@
 #include <QPushButton>
 #include <QTimerEvent>
 
+#include <QComboBox>
+
 #include <QMouseEvent>
 
 #include <QFileDialog>
@@ -38,8 +40,14 @@ public slots:
     void OnUpdatePlayState(int iState, const char *pszMessage);  //响应信号，更新播放状态。
     void OnVideoPlayStep(int iStep, int iVideoReportTotal);
     void OnAudioPlayStep(int iStep, int iAudioReportTotal);
-    void OnButton_OpenFile();
-    void OnButton_Play();
+
+    void OnButton_Play();       //播放
+    void OnButton_OpenFile();   //打开
+
+    void OnButton_Cube();   //立方体
+    void OnButton_Ring();   //梯形环
+    void OnButton_Plane();  //平面
+    void OnButton_SplitWindow();
 
     void OnButton_Voice();
 
@@ -79,6 +87,7 @@ private:
     QPushButton  *m_pPushButton_Pause;     //暂停按钮
     QPushButton  *m_pPushButton_OpenFile;  //打开文件
     QLineEdit    *m_pLineEdit_FilePath;    //显示文件路径
+    QComboBox    *m_pComboBox_FilePath;    //下拉列表中保存文件路径
 
     QPushButton  *m_pPushButton_Repeat;    //重复播放按钮
 
