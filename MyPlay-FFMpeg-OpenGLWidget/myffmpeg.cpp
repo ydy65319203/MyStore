@@ -97,7 +97,7 @@ void CMyFFmpeg::Play()
 //        m_threadOpenAVFile.join();
 //    }
 
-    LOG(Info, "CMyFFmpeg::Play()---> m_iVideoStream=%d, m_iAudioStream=%d; \n", m_iVideoStream, m_iAudioStream);
+    //LOG(Info, "CMyFFmpeg::Play()---> m_iVideoStream=%d, m_iAudioStream=%d; \n", m_iVideoStream, m_iAudioStream);
 
     //解包线程
     if (0 <= m_iVideoStream || 0 <= m_iAudioStream)
@@ -611,6 +611,8 @@ void CMyFFmpeg::thread_OpenAVFile()
         LOG(Info, "\n");
     }
 
+    LOG(Info, "CMyFFmpeg::thread_OpenAVFile()---> m_iVideoStream=%d, m_iAudioStream=%d; \n", m_iVideoStream, m_iAudioStream);
+
     //选择上报设备，音频优先。 //int64_t av_rescale_q(int64_t a, AVRational bq, AVRational cq) av_const;
     if(m_iAudioStream >= 0)
     {
@@ -985,11 +987,53 @@ void CMyFFmpeg::thread_Video()
         return;
     }
 
-    int iRet = av_image_alloc(pAVFrameYUV->data, pAVFrameYUV->linesize,
-                              m_pVideoCodecCtx->width, m_pVideoCodecCtx->height,
-                              AV_PIX_FMT_YUV420P, 1);
+    //计算帧尺寸
+    pAVFrameYUV->width = m_pVideoCodecCtx->width & 0xFFFFFFF0;
+    pAVFrameYUV->height = m_pVideoCodecCtx->height;
+    //int iAlign = pAVFrameYUV->width & 0xFFFFFFF0;
+    if (pAVFrameYUV->width != m_pVideoCodecCtx->width)
+    {
+        pAVFrameYUV->width += 0x10;
+        LOG(Info, "CMyFFmpeg::thread_Video()---> SET pAVFrameYUV->width = %d; \n", pAVFrameYUV->width);
+    }
 
-    LOG(Info, "CMyFFmpeg::thread_Video()---> pAVFrameYUV: av_image_alloc(AV_PIX_FMT_YUV420P, width=%d, height=%d) = %d; \n", m_pVideoCodecCtx->width, m_pVideoCodecCtx->height, iRet);
+    /*
+    int iFrameSizeY = m_pVideoCodecCtx->width * m_pVideoCodecCtx->height;  //计算Y分量的帧尺寸
+    int iFrameSizeU = iFrameSizeY / 4;                                     //YUV420P格式: YUV=4:1:1
+
+    //256字节对齐
+    int iFrameSizeV = iFrameSizeU & 0xFFFFFF00;
+    if (iFrameSizeV != iFrameSizeU)
+    {
+        iFrameSizeV += 0x100;
+        //iFrameSizeY = iFrameSizeU * 4;
+    }
+
+    //申请内存
+    int iFrameSizeYUV = iFrameSizeV * 6;
+    uint8_t *pDataYUV = new uint8_t[ iFrameSizeYUV ];
+    if (pDataYUV == NULL)
+    {
+        LOG(Error, "CMyFFmpeg::thread_Video()---> new uint8_t[ iFrameSizeYUV=%d ] = NULL; \n", iFrameSizeYUV);
+        return;
+    }
+
+    pAVFrameYUV->data[0] = pDataYUV;
+    pAVFrameYUV->data[1] = pDataYUV + iFrameSizeY;
+    pAVFrameYUV->data[2] = pDataYUV + iFrameSizeU;
+    pAVFrameYUV->data[3] = 0;
+
+    pAVFrameYUV->linesize[0] = m_pVideoCodecCtx->width;
+    pAVFrameYUV->linesize[1] = m_pVideoCodecCtx->width / 2;
+    pAVFrameYUV->linesize[2] = m_pVideoCodecCtx->width / 2;
+    pAVFrameYUV->linesize[3] = 0;
+    */
+
+    int iFrameSizeYUV = av_image_alloc(pAVFrameYUV->data, pAVFrameYUV->linesize,
+                                       pAVFrameYUV->width, pAVFrameYUV->height,
+                                       AV_PIX_FMT_YUV420P, 1);
+
+    LOG(Info, "CMyFFmpeg::thread_Video()---> pAVFrameYUV: av_image_alloc(AV_PIX_FMT_YUV420P, width=%d, height=%d) = %d; \n", pAVFrameYUV->width, pAVFrameYUV->height, iFrameSizeYUV);
     LOG(Info, "CMyFFmpeg::thread_Video()---> pAVFrameYUV->data[0]=%p, data[1]=%p, data[2]=%p, data[3]=%d;  \n", pAVFrameYUV->data[0], pAVFrameYUV->data[1], pAVFrameYUV->data[2], pAVFrameYUV->data[3]);
     LOG(Info, "CMyFFmpeg::thread_Video()---> pAVFrameYUV->linesize[0]=%d, linesize[1]=%d, linesize[2]=%d, linesize[3]=%d;  \n", pAVFrameYUV->linesize[0], pAVFrameYUV->linesize[1], pAVFrameYUV->linesize[2], pAVFrameYUV->linesize[3]);
 
@@ -1070,11 +1114,11 @@ void CMyFFmpeg::thread_Video()
            if(m_pImageConvertCtx == NULL)
            {
                //格式转换上下文
-               LOG(Info, "CMyFFmpeg::thread_Video()---> m_pImageConvertCtx = sws_getContext(width=%d, height=%d, AV_PIX_FMT_YUV420P, SWS_BICUBIC); \n", pAVFrame->width, pAVFrame->height);
+               LOG(Info, "CMyFFmpeg::thread_Video()---> m_pImageConvertCtx = sws_getContext(width=%d, height=%d, AV_PIX_FMT_YUV420P, width=%d, height=%d, SWS_BICUBIC); \n", pAVFrame->width, pAVFrame->height, pAVFrameYUV->width, pAVFrameYUV->height);
                m_pImageConvertCtx = sws_getContext(pAVFrame->width, pAVFrame->height,
                                                    m_pVideoCodecCtx->pix_fmt,
-                                                   pAVFrame->width,
-                                                   pAVFrame->height,
+                                                   pAVFrameYUV->width,
+                                                   pAVFrameYUV->height,
                                                    AV_PIX_FMT_YUV420P,
                                                    SWS_BICUBIC,   //缩放算法
                                                    NULL, NULL, NULL);
@@ -1085,13 +1129,13 @@ void CMyFFmpeg::thread_Video()
                }
 
                //设置图像格式和尺寸
-               LOG(Info, "CMyFFmpeg::thread_Video()---> m_pMyVideoOutput->setVideoFormat(AV_PIX_FMT_YUV420P=0, width=%d, height=%d, iVideoStreamDuration=0x%X, pAVFrameYUV->data[0]);  Sleep(10);\n", pAVFrame->width, pAVFrame->height, m_iVideoStreamDuration);
-               m_pMyVideoOutput->setVideoFormat(AV_PIX_FMT_YUV420P, pAVFrame->width, pAVFrame->height, m_iVideoStreamDuration, pAVFrameYUV->data[0]);
+               LOG(Info, "CMyFFmpeg::thread_Video()---> m_pMyVideoOutput->setVideoFormat(AV_PIX_FMT_YUV420P=0, width=%d, height=%d, iVideoStreamDuration=0x%X, pAVFrameYUV->data[0]);  Sleep(10);\n", pAVFrameYUV->width, pAVFrameYUV->height, m_iVideoStreamDuration);
+               m_pMyVideoOutput->setVideoFormat(AV_PIX_FMT_YUV420P, pAVFrameYUV->width, pAVFrameYUV->height, m_iVideoStreamDuration, pAVFrameYUV->data[0]);
                Sleep(10);
            }
 
            //转换像素格式 return the height of the output slice
-           iRet = sws_scale(m_pImageConvertCtx, (const unsigned char* const*)pAVFrame->data, pAVFrame->linesize,
+           int iRet = sws_scale(m_pImageConvertCtx, (const unsigned char* const*)pAVFrame->data, pAVFrame->linesize,
                             0, m_pVideoCodecCtx->height,  //定义输入图像上的处理区域，srcSliceY是起始位置，srcSliceH是处理多少行
                             pAVFrameYUV->data, pAVFrameYUV->linesize);
            LOG(Debug, "CMyFFmpeg::thread_Video()---> sws_scale() = %d; \n", iRet);

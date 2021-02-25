@@ -823,6 +823,9 @@ void MyOpenGLWidget::paintGL_TextureProgram()
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);   // 纹理放大时的过滤方式 线性 or GL_NEAREST 相邻
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, m_iWidth, m_iHeight, 0, GL_RED,GL_UNSIGNED_BYTE, m_pYUVFrame);
 
+        //使用glTexImage2D()时所采用的位图文件分辨率必须为：64×64、128×128、256×256三种格式，如果其他大小则会出现绘制不正常。
+        //gluBuild2DMipmaps()支持任意分辨率位图文件。
+
         //qDebug("MyOpenGLWidget::paintGL_TextureProgram()---> glActiveTexture(GL_TEXTURE1);");
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, m_uTextureId[1]);
